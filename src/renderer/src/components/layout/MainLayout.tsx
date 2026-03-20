@@ -27,9 +27,9 @@ export default function MainLayout() {
         {/* Group horizontal: Sidebar redimensionable + Editor */}
         <Group direction="horizontal">
           <Panel
-            defaultSize={25}
-            minSize={15}
-            maxSize={50}
+            defaultSize="25%"
+            minSize="15%"
+            maxSize="50%"
             order={1}
           >
             <Sidebar />
