@@ -1,18 +1,31 @@
 @import "tailwindcss";
 
 /*
- * Variables CSS para el sistema de temas de CristalCE.
- * Permite cambiar entre Cristal Dark / Cristal Light dinámicamente
- * sin re-render de React (solo swap de variables CSS).
+ * Variables CSS para el sistema de temas "Cristal Dark".
+ * Swap de :root permite cambiar a Cristal Light sin re-render de React.
+ * Nomenclatura: --cristal-{zona}-{propiedad}
  */
 :root {
+  /* Fondos — escala de grises oscuros con profundidad visual */
   --cristal-bg-primary: #1e1e1e;
   --cristal-bg-secondary: #252526;
   --cristal-bg-tertiary: #2d2d30;
+  --cristal-bg-activitybar: #181818;
+  --cristal-bg-statusbar: #007acc;
+
+  /* Texto */
   --cristal-text-primary: #cccccc;
   --cristal-text-secondary: #969696;
+  --cristal-text-inactive: #6e6e6e;
+
+  /* Acento y bordes */
   --cristal-accent: #007acc;
-  --cristal-border: #3c3c3c;
+  --cristal-accent-hover: #1a8ad4;
+  --cristal-border: #2b2b2b;
+
+  /* Resize handle */
+  --cristal-resize-handle: transparent;
+  --cristal-resize-handle-hover: var(--cristal-accent);
 }
 
 * {
