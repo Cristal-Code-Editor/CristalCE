@@ -4,10 +4,11 @@
  */
 const EXT_TO_LANGUAGE: Record<string, string> = {
   // TypeScript / JavaScript
+  // Monaco no diferencia typescript/typescriptreact; JSX se soporta dentro de typescript/javascript.
   ts: 'typescript',
-  tsx: 'typescriptreact',
+  tsx: 'typescript',
   js: 'javascript',
-  jsx: 'javascriptreact',
+  jsx: 'javascript',
   mjs: 'javascript',
   cjs: 'javascript',
   mts: 'typescript',
@@ -98,9 +99,7 @@ export function detectLanguage(fileName: string): string {
  */
 const LANGUAGE_TO_EXT: Record<string, string> = {
   typescript: 'ts',
-  typescriptreact: 'tsx',
   javascript: 'js',
-  javascriptreact: 'jsx',
   html: 'html',
   css: 'css',
   scss: 'scss',
