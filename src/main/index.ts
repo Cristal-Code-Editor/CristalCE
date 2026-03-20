@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, Menu, dialog, shell, type MenuItemConstructorOptions } from 'electron'
 import { join } from 'path'
+import { readFile, writeFile, readdir, stat } from 'fs/promises'
 import { is } from '@electron-toolkit/utils'
 import { IPC_CHANNELS } from './ipcChannels'
 
@@ -201,6 +202,68 @@ ipcMain.on('popup-app-menu', (_event, menuLabel: string, x: number, y: number) =
     target.submenu.popup({ window: mainWindow, x: Math.round(x), y: Math.round(y) })
   }
 })
+
+// ─── IPC: File System Operations ──────────────────────────────────────────────
+
+/** Estructura de una entrada de directorio enviada al Renderer. */
+interface DirEntry {
+  name: string
+  path: string
+  isDirectory: boolean
+}
+
+ipcMain.handle(IPC_CHANNELS.FS_READ_FILE, async (_event, filePath: string): Promise<string> => {
+  return readFile(filePath, 'utf-8')
+})
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_WRITE_FILE,
+  async (_event, filePath: string, content: string): Promise<void> => {
+    await writeFile(filePath, content, 'utf-8')
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_READ_DIRECTORY,
+  async (_event, dirPath: string): Promise<DirEntry[]> => {
+    const entries = await readdir(dirPath, { withFileTypes: true })
+    const result: DirEntry[] = []
+    for (const entry of entries) {
+      // Ocultar archivos/carpetas ocultas (dotfiles) y node_modules
+      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue
+      result.push({
+        name: entry.name,
+        path: join(dirPath, entry.name),
+        isDirectory: entry.isDirectory(),
+      })
+    }
+    // Carpetas primero, luego archivos, ambos alfabéticos
+    result.sort((a, b) => {
+      if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1
+      return a.name.localeCompare(b.name)
+    })
+    return result
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_SAVE_DIALOG,
+  async (_event, defaultPath?: string): Promise<string | null> => {
+    if (!mainWindow) return null
+    const result = await dialog.showSaveDialog(mainWindow, {
+      defaultPath,
+      filters: [
+        { name: 'Todos los archivos', extensions: ['*'] },
+        { name: 'TypeScript', extensions: ['ts', 'tsx'] },
+        { name: 'JavaScript', extensions: ['js', 'jsx'] },
+        { name: 'JSON', extensions: ['json'] },
+        { name: 'HTML', extensions: ['html', 'htm'] },
+        { name: 'CSS', extensions: ['css'] },
+      ],
+    })
+    return result.canceled ? null : result.filePath ?? null
+  },
+)
 
 app.whenReady().then(() => {
   createWindow()
