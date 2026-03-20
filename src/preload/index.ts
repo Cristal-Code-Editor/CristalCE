@@ -32,6 +32,8 @@ export interface CristalAPI {
   windowMaximize: () => void
   /** Cierra la ventana principal. */
   windowClose: () => void
+  /** Despliega un submenú nativo por su label (File, Edit, etc.). */
+  popupMenu: (menuLabel: string) => void
 }
 
 // ─── Exposición segura al Renderer ────────────────────────────────────────────
@@ -81,6 +83,10 @@ contextBridge.exposeInMainWorld('cristalAPI', {
 
   windowClose: () => {
     ipcRenderer.send('window-close')
+  },
+
+  popupMenu: (menuLabel: string) => {
+    ipcRenderer.send('popup-app-menu', menuLabel)
   },
 
 } satisfies CristalAPI)
