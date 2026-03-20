@@ -1,31 +1,32 @@
 @import "tailwindcss";
 
 /*
- * Variables CSS para el sistema de temas "Cristal Dark".
+ * Paleta "Cristal Dark Charcoal" — identidad visual propia de CristalCE.
+ * Tonos charcoal cálidos con acento cian cristalino.
  * Swap de :root permite cambiar a Cristal Light sin re-render de React.
- * Nomenclatura: --cristal-{zona}-{propiedad}
  */
 :root {
-  /* Fondos — escala de grises oscuros con profundidad visual */
-  --cristal-bg-primary: #1e1e1e;
-  --cristal-bg-secondary: #252526;
-  --cristal-bg-tertiary: #2d2d30;
-  --cristal-bg-activitybar: #181818;
-  --cristal-bg-statusbar: #007acc;
+  /* Fondos — charcoal cálido con capas de profundidad */
+  --cristal-bg-activitybar: #1c1c1e;
+  --cristal-bg-sidebar: #202022;
+  --cristal-bg-editor: #28282a;
+  --cristal-bg-statusbar: #1c1c1e;
+  --cristal-bg-header: #1c1c1e;
+  --cristal-bg-hover: #2c2c2e;
 
-  /* Texto */
-  --cristal-text-primary: #cccccc;
-  --cristal-text-secondary: #969696;
-  --cristal-text-inactive: #6e6e6e;
+  /* Texto — suave, nunca blanco puro */
+  --cristal-text-normal: #e5e5e7;
+  --cristal-text-muted: #8e8e93;
+  --cristal-text-faint: #5a5a5e;
 
-  /* Acento y bordes */
-  --cristal-accent: #007acc;
-  --cristal-accent-hover: #1a8ad4;
-  --cristal-border: #2b2b2b;
+  /* Acento cristalino */
+  --cristal-accent: #00e5ff;
+  --cristal-accent-hover: #33ebff;
+  --cristal-accent-dim: rgba(0, 229, 255, 0.15);
 
-  /* Resize handle */
-  --cristal-resize-handle: transparent;
-  --cristal-resize-handle-hover: var(--cristal-accent);
+  /* Bordes y separadores */
+  --cristal-border: #2a2a2c;
+  --cristal-border-subtle: #232325;
 }
 
 * {
@@ -43,10 +44,11 @@ body,
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-    Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono',
+    Menlo, Consolas, 'Liberation Mono', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--cristal-bg-primary);
-  color: var(--cristal-text-primary);
+  background-color: var(--cristal-bg-editor);
+  color: var(--cristal-text-normal);
+  font-size: 13px;
 }
