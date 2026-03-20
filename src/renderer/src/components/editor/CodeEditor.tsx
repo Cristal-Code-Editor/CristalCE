@@ -1,11 +1,11 @@
-import Editor, { type BeforeMount } from '@monaco-editor/react'
+import Editor, { type BeforeMount, type OnChange } from '@monaco-editor/react'
+import { useCallback } from 'react'
 
-const DEFAULT_CODE = `// Bienvenido a CristalCE
-// Tu entorno de desarrollo premium.
-
-function init() {
-  console.log('CristalCE está vivo');
-}`
+interface CodeEditorProps {
+  language: string
+  content: string
+  onContentChange: (value: string) => void
+}
 
 const handleBeforeMount: BeforeMount = (monaco) => {
   monaco.editor.defineTheme('cristal-dark', {
@@ -38,15 +38,25 @@ function EditorLoading() {
   )
 }
 
-export default function CodeEditor() {
+/**
+ * Motor Monaco envuelto en React.
+ * Recibe contenido y lenguaje por props — listo para integración con sistema de archivos.
+ */
+export default function CodeEditor({ language, content, onContentChange }: CodeEditorProps) {
+  const handleChange: OnChange = useCallback(
+    (value) => onContentChange(value ?? ''),
+    [onContentChange],
+  )
+
   return (
     <Editor
       width="100%"
       height="100%"
-      defaultLanguage="typescript"
-      defaultValue={DEFAULT_CODE}
+      language={language}
+      value={content}
       theme="cristal-dark"
       beforeMount={handleBeforeMount}
+      onChange={handleChange}
       loading={<EditorLoading />}
       options={{
         minimap: { enabled: false },
@@ -54,6 +64,7 @@ export default function CodeEditor() {
         fontFamily: "'JetBrains Mono', monospace",
         cursorBlinking: 'smooth',
         smoothScrolling: true,
+        padding: { top: 16 },
       }}
     />
   )
