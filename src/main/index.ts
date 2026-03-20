@@ -23,7 +23,9 @@ function createWindow(): void {
     minHeight: 400,
     show: false,
     title: 'CristalCE',
-    ...(process.platform === 'linux' ? {} : {}),
+    // Header personalizado en el Renderer — sin barra de título nativa
+    frame: false,
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       nodeIntegration: false,
