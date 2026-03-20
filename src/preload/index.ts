@@ -26,6 +26,12 @@ export interface CristalAPI {
    * Recibe la ruta absoluta de la carpeta.
    */
   onFolderOpen: (callback: (folderPath: string) => void) => () => void
+  /** Minimiza la ventana principal. */
+  windowMinimize: () => void
+  /** Alterna maximizar / restaurar la ventana principal. */
+  windowMaximize: () => void
+  /** Cierra la ventana principal. */
+  windowClose: () => void
 }
 
 // ─── Exposición segura al Renderer ────────────────────────────────────────────
@@ -63,6 +69,18 @@ contextBridge.exposeInMainWorld('cristalAPI', {
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.FILE_OPEN_FOLDER, handler)
     }
+  },
+
+  windowMinimize: () => {
+    ipcRenderer.send('window-minimize')
+  },
+
+  windowMaximize: () => {
+    ipcRenderer.send('window-maximize')
+  },
+
+  windowClose: () => {
+    ipcRenderer.send('window-close')
   },
 
 } satisfies CristalAPI)
