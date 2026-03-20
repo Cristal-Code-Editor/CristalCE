@@ -194,6 +194,14 @@ ipcMain.on('window-close', () => {
   mainWindow?.close()
 })
 
+ipcMain.on('popup-app-menu', (_event, menuLabel: string) => {
+  const appMenu = Menu.getApplicationMenu()
+  const target = appMenu?.items.find((item) => item.label === menuLabel)
+  if (target?.submenu && mainWindow) {
+    target.submenu.popup({ window: mainWindow })
+  }
+})
+
 app.whenReady().then(() => {
   createWindow()
 
