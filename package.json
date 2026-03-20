@@ -1,0 +1,40 @@
+{
+  "name": "cristalcodeeditor",
+  "version": "0.1.0",
+  "description": "CristalCE — Editor de código ultraligero tipo VS Code",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cristal-Code-Editor/CristalCE.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Cristal-Code-Editor/CristalCE/issues"
+  },
+  "homepage": "https://github.com/Cristal-Code-Editor/CristalCE#readme",
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@electron-toolkit/utils": "^4.0.0",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1",
+    "electron-vite": "^5.0.0",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}
