@@ -1,8 +1,9 @@
+import { Minus, Square, X } from '@phosphor-icons/react'
+
 /**
  * Cabecera personalizada premium de CristalCE.
- * Reemplaza visualmente el menú nativo con una barra compacta de 32px.
- * Opciones de menú simuladas (sin lógica) + logo cristalino centrado.
- * La región -webkit-app-region: drag permite arrastrar la ventana.
+ * Barra compacta de 32px con menú simulado, logo centrado y controles de ventana.
+ * -webkit-app-region: drag permite arrastrar la ventana desde la cabecera.
  */
 
 const MENU_ITEMS = ['File', 'Edit', 'Selection', 'View', 'Go', 'Help'] as const
@@ -14,20 +15,20 @@ export default function Header() {
       style={{
         backgroundColor: 'var(--cristal-bg-header)',
         borderBottom: '1px solid var(--cristal-border-subtle)',
-        // Permite arrastrar la ventana desde la cabecera
-        WebkitAppRegion: 'drag' as unknown as string,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        WebkitAppRegion: 'drag' as any,
       }}
     >
       {/* Izquierda: opciones de menú simuladas */}
       <div
-        className="flex items-center gap-0.5 pl-2"
-        style={{ WebkitAppRegion: 'no-drag' as unknown as string }}
+        className="flex items-center gap-4 pl-2"
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        style={{ WebkitAppRegion: 'no-drag' as any }}
       >
         {MENU_ITEMS.map((item) => (
           <button
             key={item}
-            className="rounded px-2 py-0.5 text-[11.5px] transition-colors duration-75 hover:bg-[var(--cristal-bg-hover)]"
-            style={{ color: 'var(--cristal-text-muted)' }}
+            className="rounded px-2 py-1 text-sm text-[var(--cristal-text-muted)] transition-colors duration-75 hover:bg-white/5 hover:text-[var(--cristal-text-normal)]"
           >
             {item}
           </button>
@@ -36,7 +37,6 @@ export default function Header() {
 
       {/* Centro: logo + nombre de la app */}
       <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1.5">
-        {/* Mini logo cristalino (hexágono) */}
         <svg
           width="14"
           height="14"
@@ -52,15 +52,40 @@ export default function Header() {
           />
         </svg>
         <span
-          className="text-[11.5px] font-medium tracking-[0.08em]"
-          style={{ color: 'var(--cristal-text-muted)' }}
+          className="text-[11.5px] font-medium tracking-[0.08em] text-[var(--cristal-text-muted)]"
         >
           CristalCE
         </span>
       </div>
 
-      {/* Derecha: espacio reservado para controles de ventana (futuro) */}
-      <div className="w-20" />
+      {/* Derecha: controles de ventana */}
+      <div
+        className="flex h-full items-center"
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        style={{ WebkitAppRegion: 'no-drag' as any }}
+      >
+        <button
+          onClick={() => window.cristalAPI.windowMinimize()}
+          className="flex h-full w-12 items-center justify-center text-[var(--cristal-text-muted)] transition-colors hover:bg-white/10 hover:text-[var(--cristal-text-normal)]"
+          aria-label="Minimize"
+        >
+          <Minus size={16} weight="light" />
+        </button>
+        <button
+          onClick={() => window.cristalAPI.windowMaximize()}
+          className="flex h-full w-12 items-center justify-center text-[var(--cristal-text-muted)] transition-colors hover:bg-white/10 hover:text-[var(--cristal-text-normal)]"
+          aria-label="Maximize"
+        >
+          <Square size={14} weight="light" />
+        </button>
+        <button
+          onClick={() => window.cristalAPI.windowClose()}
+          className="flex h-full w-12 items-center justify-center text-[var(--cristal-text-muted)] transition-colors hover:bg-red-500 hover:text-white"
+          aria-label="Close"
+        >
+          <X size={16} weight="light" />
+        </button>
+      </div>
     </header>
   )
 }
