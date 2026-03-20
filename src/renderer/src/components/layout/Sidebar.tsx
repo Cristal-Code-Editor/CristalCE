@@ -15,11 +15,6 @@ import {
   FolderPlus,
   ArrowClockwise,
   ArrowsInSimple,
-  PencilSimple,
-  Trash,
-  Copy,
-  FolderOpen as FolderReveal,
-  ArrowSquareOut,
 } from '@phosphor-icons/react'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import { useWorkspace } from '../../context/WorkspaceContext'
@@ -127,132 +122,6 @@ function InlineInput({
         }}
         spellCheck={false}
       />
-    </div>
-  )
-}
-
-/* ── Context Menu (portal-free simple absolute) ────────── */
-
-interface ContextMenuState {
-  x: number
-  y: number
-  entry: DirEntry
-}
-
-interface ContextMenuItem {
-  label: string
-  action: () => void
-  icon?: PhosphorIcon
-  shortcut?: string
-  danger?: boolean
-  separator?: boolean
-}
-
-function ContextMenu({
-  items,
-  x,
-  y,
-  onClose,
-}: {
-  items: ContextMenuItem[]
-  x: number
-  y: number
-  onClose: () => void
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
-    }
-    const keyHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('mousedown', handler)
-    document.addEventListener('keydown', keyHandler)
-    return () => {
-      document.removeEventListener('mousedown', handler)
-      document.removeEventListener('keydown', keyHandler)
-    }
-  }, [onClose])
-
-  // Ajustar posición para que no se salga de la ventana
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    if (rect.right > window.innerWidth) {
-      el.style.left = `${window.innerWidth - rect.width - 6}px`
-    }
-    if (rect.bottom > window.innerHeight) {
-      el.style.top = `${window.innerHeight - rect.height - 6}px`
-    }
-  }, [x, y])
-
-  return (
-    <div
-      ref={ref}
-      className="min-w-[200px] overflow-hidden rounded-lg border py-[5px]"
-      onContextMenu={(e) => e.preventDefault()}
-      style={{
-        position: 'fixed',
-        left: x,
-        top: y,
-        zIndex: 9999,
-        backgroundColor: 'rgba(30, 30, 32, 0.96)',
-        backdropFilter: 'blur(12px)',
-        borderColor: 'rgba(255,255,255,0.08)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3)',
-      }}
-    >
-      {items.map((item, i) =>
-        item.separator ? (
-          <div
-            key={i}
-            className="mx-[10px] my-[5px] h-px"
-            style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}
-          />
-        ) : (
-          <div
-            key={i}
-            onClick={() => {
-              item.action()
-              onClose()
-            }}
-            className="group/item mx-[5px] flex h-[28px] cursor-pointer items-center gap-2.5 rounded-md px-2 text-[12px] transition-colors"
-            style={{ color: item.danger ? '#f44747' : 'var(--cristal-text-normal)' }}
-            onMouseEnter={(e) => {
-              ;(e.currentTarget as HTMLElement).style.backgroundColor = item.danger
-                ? 'rgba(244, 71, 71, 0.12)'
-                : 'rgba(255,255,255,0.06)'
-            }}
-            onMouseLeave={(e) => {
-              ;(e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-            }}
-          >
-            {item.icon && (
-              <item.icon
-                size={14}
-                weight="light"
-                className="shrink-0"
-                style={{
-                  color: item.danger ? '#f44747' : 'var(--cristal-text-muted)',
-                  opacity: 0.85,
-                }}
-              />
-            )}
-            <span className="flex-1 truncate">{item.label}</span>
-            {item.shortcut && (
-              <span
-                className="ml-4 shrink-0 text-[10px]"
-                style={{ color: 'var(--cristal-text-faint)' }}
-              >
-                {item.shortcut}
-              </span>
-            )}
-          </div>
-        ),
-      )}
     </div>
   )
 }
@@ -493,7 +362,6 @@ export default function Sidebar() {
   const [childrenCache, setChildrenCache] = useState<Map<string, DirEntry[]>>(new Map())
   const [creatingIn, setCreatingIn] = useState<{ parentPath: string; type: 'file' | 'folder' } | null>(null)
   const [rootCollapsed, setRootCollapsed] = useState(false)
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [renamingPath, setRenamingPath] = useState<string | null>(null)
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
 
@@ -601,90 +469,68 @@ export default function Sidebar() {
 
   /* ── Context menu ── */
 
-  const handleContextMenu = useCallback((e: React.MouseEvent, entry: DirEntry) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setSelectedPath(entry.path)
-    setContextMenu({ x: e.clientX, y: e.clientY, entry })
-  }, [])
+  /* ── Context menu (nativo vía Electron Menu.popup) ── */
 
-  const closeContextMenu = useCallback(() => setContextMenu(null), [])
+  const handleContextMenu = useCallback(
+    async (e: React.MouseEvent, entry: DirEntry) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setSelectedPath(entry.path)
 
-  const buildContextItems = useCallback(
-    (entry: DirEntry): ContextMenuItem[] => {
-      const items: ContextMenuItem[] = []
+      // Construir items serializables para el menú nativo
+      const items: { id: string; label: string; accelerator?: string; separator?: boolean }[] = []
 
       if (!entry.isDirectory) {
-        items.push({
-          label: 'Abrir',
-          icon: ArrowSquareOut,
-          action: () => requestOpenFile(entry.path),
-        })
-        items.push({ label: '', action: () => {}, separator: true })
+        items.push({ id: 'open', label: 'Abrir' })
+        items.push({ id: 'sep-1', label: '', separator: true })
       }
 
       if (entry.isDirectory) {
-        items.push({
-          label: 'Nuevo archivo',
-          icon: FilePlus,
-          action: () => {
-            handleToggle(entry.path, true).then(() => {
-              setCreatingIn({ parentPath: entry.path, type: 'file' })
-            })
-          },
-        })
-        items.push({
-          label: 'Nueva carpeta',
-          icon: FolderPlus,
-          action: () => {
-            handleToggle(entry.path, true).then(() => {
-              setCreatingIn({ parentPath: entry.path, type: 'folder' })
-            })
-          },
-        })
-        items.push({ label: '', action: () => {}, separator: true })
+        items.push({ id: 'new-file', label: 'Nuevo archivo' })
+        items.push({ id: 'new-folder', label: 'Nueva carpeta' })
+        items.push({ id: 'sep-2', label: '', separator: true })
       }
 
-      items.push({
-        label: 'Renombrar',
-        icon: PencilSimple,
-        shortcut: 'F2',
-        action: () => setRenamingPath(entry.path),
-      })
+      items.push({ id: 'rename', label: 'Renombrar', accelerator: 'F2' })
+      items.push({ id: 'copy-path', label: 'Copiar ruta', accelerator: 'Shift+Alt+C' })
+      items.push({ id: 'sep-3', label: '', separator: true })
+      items.push({ id: 'reveal', label: 'Revelar en el Explorador' })
+      items.push({ id: 'sep-4', label: '', separator: true })
+      items.push({ id: 'delete', label: 'Eliminar', accelerator: 'Delete' })
 
-      items.push({
-        label: 'Copiar ruta',
-        icon: Copy,
-        shortcut: 'Shift+Alt+C',
-        action: () => window.cristalAPI.copyPath(entry.path),
-      })
+      const actionId = await window.cristalAPI.showContextMenu(items)
+      if (!actionId) return
 
-      items.push({ label: '', action: () => {}, separator: true })
-
-      items.push({
-        label: 'Revelar en el Explorador',
-        icon: FolderReveal,
-        action: () => window.cristalAPI.revealInExplorer(entry.path),
-      })
-
-      items.push({ label: '', action: () => {}, separator: true })
-
-      items.push({
-        label: 'Eliminar',
-        icon: Trash,
-        shortcut: 'Supr',
-        danger: true,
-        action: async () => {
+      switch (actionId) {
+        case 'open':
+          requestOpenFile(entry.path)
+          break
+        case 'new-file':
+          await handleToggle(entry.path, true)
+          setCreatingIn({ parentPath: entry.path, type: 'file' })
+          break
+        case 'new-folder':
+          await handleToggle(entry.path, true)
+          setCreatingIn({ parentPath: entry.path, type: 'folder' })
+          break
+        case 'rename':
+          setRenamingPath(entry.path)
+          break
+        case 'copy-path':
+          window.cristalAPI.copyPath(entry.path)
+          break
+        case 'reveal':
+          window.cristalAPI.revealInExplorer(entry.path)
+          break
+        case 'delete':
           try {
             await window.cristalAPI.deletePath(entry.path)
             await refreshDir(parentDir(entry.path))
           } catch {
             /* ignore */
           }
-        },
-      })
-
-      return items
+          break
+      }
     },
     [requestOpenFile, handleToggle, refreshDir],
   )
@@ -747,13 +593,9 @@ export default function Sidebar() {
     (e: React.MouseEvent) => {
       if (!state.rootPath) return
       e.preventDefault()
-      setContextMenu({
-        x: e.clientX,
-        y: e.clientY,
-        entry: { name: state.rootName, path: state.rootPath, isDirectory: true },
-      })
+      handleContextMenu(e, { name: state.rootName, path: state.rootPath, isDirectory: true })
     },
-    [state.rootPath, state.rootName],
+    [state.rootPath, state.rootName, handleContextMenu],
   )
 
   return (
@@ -858,15 +700,6 @@ export default function Sidebar() {
         </>
       )}
 
-      {/* Context Menu */}
-      {contextMenu && (
-        <ContextMenu
-          items={buildContextItems(contextMenu.entry)}
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onClose={closeContextMenu}
-        />
-      )}
     </div>
   )
 }
