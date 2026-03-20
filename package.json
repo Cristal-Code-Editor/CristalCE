@@ -22,6 +22,7 @@
   "homepage": "https://github.com/Cristal-Code-Editor/CristalCE#readme",
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.2.8",
+    "@monaco-editor/react": "^4.7.0",
     "@phosphor-icons/react": "^2.1.10",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
