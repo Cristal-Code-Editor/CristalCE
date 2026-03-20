@@ -48,6 +48,8 @@ export const IPC_CHANNELS = {
   FS_REVEAL_IN_EXPLORER: 'FS_REVEAL_IN_EXPLORER',
   /** Renderer → Main: copiar ruta al portapapeles */
   FS_COPY_PATH: 'FS_COPY_PATH',
+  /** Renderer → Main: mostrar menú contextual nativo y retornar el ID seleccionado */
+  SHOW_CONTEXT_MENU: 'SHOW_CONTEXT_MENU',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
