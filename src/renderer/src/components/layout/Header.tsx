@@ -1,90 +1,164 @@
 import { Minus, Square, X } from '@phosphor-icons/react'
 
-/**
- * Cabecera personalizada premium de CristalCE.
- * Barra compacta de 32px: menú nativo vía IPC, logo centrado, controles de ventana.
- * -webkit-app-region: drag permite arrastrar la ventana desde la cabecera.
- */
-
 const MENU_ITEMS = ['File', 'Edit', 'Selection', 'View', 'Go', 'Help'] as const
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default function Header() {
   return (
     <header
-      className="flex h-8 shrink-0 items-center justify-between select-none"
       style={{
+        display: 'flex',
+        height: 36,
+        alignItems: 'center',
+        justifyContent: 'space-between',
         backgroundColor: 'var(--cristal-bg-header)',
         borderBottom: '1px solid var(--cristal-border-subtle)',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        userSelect: 'none',
+        flexShrink: 0,
         WebkitAppRegion: 'drag' as any,
       }}
     >
-      {/* Izquierda: menú — cada botón despliega su submenú nativo via IPC */}
-      <div
-        className="flex items-center pl-1"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        style={{ WebkitAppRegion: 'no-drag' as any }}
+      {/* Menú: cada botón despliega submenú nativo */}
+      <nav
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          paddingLeft: 8,
+          WebkitAppRegion: 'no-drag' as any,
+        }}
       >
         {MENU_ITEMS.map((item) => (
           <button
             key={item}
             onClick={() => window.cristalAPI.popupMenu(item)}
-            className="rounded px-2.5 py-0.5 text-[12px] text-[var(--cristal-text-muted)] transition-colors duration-75 hover:bg-white/7 hover:text-[var(--cristal-text-normal)]"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--cristal-text-muted)',
+              fontSize: 13,
+              fontFamily: 'inherit',
+              padding: '3px 8px',
+              borderRadius: 4,
+              letterSpacing: '0.01em',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'
+              e.currentTarget.style.color = 'var(--cristal-text-normal)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = 'var(--cristal-text-muted)'
+            }}
           >
             {item}
           </button>
         ))}
-      </div>
+      </nav>
 
-      {/* Centro: logo + nombre de la app */}
-      <div className="pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-center gap-1.5">
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 64 64"
-          fill="none"
-          className="text-[var(--cristal-accent)] opacity-60"
-        >
+      {/* Centro: logo + nombre */}
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          pointerEvents: 'none',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 64 64" fill="none">
           <path
             d="M32 4L56 18V46L32 60L8 46V18L32 4Z"
-            stroke="currentColor"
+            stroke="var(--cristal-accent)"
             strokeWidth="3"
             strokeLinejoin="round"
+            opacity={0.6}
           />
         </svg>
-        <span className="text-[11px] font-medium tracking-[0.08em] text-[var(--cristal-text-faint)]">
+        <span style={{ fontSize: 11, color: 'var(--cristal-text-faint)', fontWeight: 500, letterSpacing: '0.08em' }}>
           CristalCE
         </span>
       </div>
 
-      {/* Derecha: controles de ventana */}
+      {/* Controles de ventana */}
       <div
-        className="flex h-full items-center"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        style={{ WebkitAppRegion: 'no-drag' as any }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          height: '100%',
+          WebkitAppRegion: 'no-drag' as any,
+        }}
       >
-        <button
+        <WindowButton
           onClick={() => window.cristalAPI.windowMinimize()}
-          className="flex h-full w-[46px] items-center justify-center text-[var(--cristal-text-muted)] transition-colors hover:bg-white/10 hover:text-[var(--cristal-text-normal)]"
-          aria-label="Minimize"
+          label="Minimize"
+          hoverBg="rgba(255,255,255,0.1)"
         >
           <Minus size={15} weight="regular" />
-        </button>
-        <button
+        </WindowButton>
+        <WindowButton
           onClick={() => window.cristalAPI.windowMaximize()}
-          className="flex h-full w-[46px] items-center justify-center text-[var(--cristal-text-muted)] transition-colors hover:bg-white/10 hover:text-[var(--cristal-text-normal)]"
-          aria-label="Maximize"
+          label="Maximize"
+          hoverBg="rgba(255,255,255,0.1)"
         >
           <Square size={13} weight="regular" />
-        </button>
-        <button
+        </WindowButton>
+        <WindowButton
           onClick={() => window.cristalAPI.windowClose()}
-          className="flex h-full w-[46px] items-center justify-center text-[var(--cristal-text-muted)] transition-colors hover:bg-red-600/90 hover:text-white"
-          aria-label="Close"
+          label="Close"
+          hoverBg="rgba(220,38,38,0.85)"
+          hoverColor="#fff"
         >
           <X size={15} weight="regular" />
-        </button>
+        </WindowButton>
       </div>
     </header>
+  )
+}
+
+function WindowButton({
+  onClick,
+  label,
+  hoverBg,
+  hoverColor,
+  children,
+}: {
+  onClick: () => void
+  label: string
+  hoverBg: string
+  hoverColor?: string
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 46,
+        height: '100%',
+        border: 'none',
+        background: 'none',
+        cursor: 'pointer',
+        color: 'var(--cristal-text-muted)',
+        transition: 'background-color 0.15s, color 0.15s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = hoverBg
+        if (hoverColor) e.currentTarget.style.color = hoverColor
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'transparent'
+        e.currentTarget.style.color = 'var(--cristal-text-muted)'
+      }}
+    >
+      {children}
+    </button>
   )
 }
