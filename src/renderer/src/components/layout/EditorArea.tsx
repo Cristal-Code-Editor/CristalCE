@@ -1,6 +1,6 @@
 import { useReducer, useCallback, useEffect } from 'react'
 import EditorPane, { type TabData } from '../editor/EditorPane'
-import { detectLanguage, fileNameFromPath } from '../../utils/languageMap'
+import { detectLanguage, fileNameFromPath, languageToExtension } from '../../utils/languageMap'
 import { useWorkspace } from '../../context/WorkspaceContext'
 
 /* ── State ─────────────────────────────────────────────── */
@@ -170,8 +170,10 @@ export default function EditorArea() {
       await window.cristalAPI.writeFile(tab.filePath, tab.content)
       dispatch({ type: 'MARK_SAVED', id: tab.id })
     } else {
-      // Archivo nuevo → pedir ruta con "Guardar como"
-      const chosenPath = await window.cristalAPI.showSaveDialog()
+      // Archivo nuevo → construir nombre sugerido con extensión del lenguaje detectado
+      const ext = languageToExtension(tab.language)
+      const suggestedName = `${tab.fileName}.${ext}`
+      const chosenPath = await window.cristalAPI.showSaveDialog(suggestedName)
       if (chosenPath) {
         await window.cristalAPI.writeFile(chosenPath, tab.content)
         dispatch({ type: 'MARK_SAVED', id: tab.id, filePath: chosenPath })
