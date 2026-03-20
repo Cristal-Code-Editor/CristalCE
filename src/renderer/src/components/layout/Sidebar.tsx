@@ -8,7 +8,7 @@ import { FolderOpen, Folder, FileTs, FileCss, FileHtml, CaretRight } from '@phos
 export default function Sidebar() {
   return (
     <div
-      className="flex h-full flex-col overflow-hidden select-none"
+      className="flex h-full min-w-0 flex-col overflow-hidden select-none"
       style={{ backgroundColor: 'var(--cristal-bg-sidebar)' }}
     >
       {/* Título de sección con icono de carpeta Phosphor */}
@@ -63,14 +63,14 @@ function TreeItem({
 }) {
   return (
     <div
-      className="flex h-[22px] cursor-pointer items-center gap-1.5 pr-2 text-[12px] hover:bg-[var(--cristal-bg-hover)]"
+      className="flex h-[22px] cursor-pointer items-center gap-1.5 px-2 pr-2 text-[12px] hover:bg-white/5"
       style={{
         paddingLeft: `${12 + depth * 12}px`,
         color: isFolder ? 'var(--cristal-text-normal)' : 'var(--cristal-text-muted)',
       }}
     >
-      <Icon size={14} weight="light" className={isFolder ? 'text-[var(--cristal-accent)]' : ''} />
-      <span>{label}</span>
+      <Icon size={14} weight="light" className={`shrink-0 ${isFolder ? 'text-[var(--cristal-accent)]' : ''}`} />
+      <span className="truncate whitespace-nowrap">{label}</span>
     </div>
   )
 }
