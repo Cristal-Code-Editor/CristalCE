@@ -619,10 +619,11 @@ export default function Sidebar() {
           </span>
           <button
             onClick={() => window.cristalAPI.openFolderDialog()}
-            className="mt-1 rounded-[4px] px-4 py-[5px] text-[12px] font-medium transition-colors hover:brightness-125"
+            className="w-full max-w-[180px] rounded-[3px] py-[4px] text-[11px] transition-opacity hover:opacity-90"
             style={{
-              backgroundColor: 'var(--cristal-accent)',
-              color: '#fff',
+              backgroundColor: 'rgba(0, 229, 255, 0.12)',
+              color: 'var(--cristal-accent)',
+              border: '1px solid rgba(0, 229, 255, 0.25)',
             }}
           >
             Abrir Carpeta
