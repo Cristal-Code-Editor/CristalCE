@@ -32,7 +32,10 @@ export default function Header() {
         {MENU_ITEMS.map((item) => (
           <button
             key={item}
-            onClick={() => window.cristalAPI.popupMenu(item)}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              window.cristalAPI.popupMenu(item, Math.round(rect.left), Math.round(rect.bottom))
+            }}
             style={{
               background: 'none',
               border: 'none',
