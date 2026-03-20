@@ -301,6 +301,49 @@ ipcMain.handle(
   },
 )
 
+// ─── IPC: Menú contextual nativo ──────────────────────────────────────────────
+
+interface ContextMenuItemDef {
+  id: string
+  label: string
+  accelerator?: string
+  separator?: boolean
+}
+
+ipcMain.handle(
+  IPC_CHANNELS.SHOW_CONTEXT_MENU,
+  async (_event, items: ContextMenuItemDef[]): Promise<string | null> => {
+    if (!mainWindow) return null
+
+    return new Promise((resolve) => {
+      let resolved = false
+
+      const template = items.map((item) => {
+        if (item.separator) {
+          return { type: 'separator' as const }
+        }
+        return {
+          label: item.label,
+          accelerator: item.accelerator,
+          click: () => {
+            resolved = true
+            resolve(item.id)
+          },
+        }
+      })
+
+      const menu = Menu.buildFromTemplate(template)
+      menu.popup({
+        window: mainWindow!,
+        callback: () => {
+          // Se llama cuando el menú se cierra (por selección o dismiss)
+          if (!resolved) resolve(null)
+        },
+      })
+    })
+  },
+)
+
 ipcMain.handle(
   IPC_CHANNELS.FS_SAVE_DIALOG,
   async (_event, defaultPath?: string): Promise<string | null> => {
