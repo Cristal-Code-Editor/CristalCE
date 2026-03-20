@@ -1,0 +1,19 @@
+appId: com.cristalce.editor
+productName: CristalCE
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.*'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+win:
+  executableName: CristalCE
+  target:
+    - nsis
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: CristalCE
+  uninstallDisplayName: CristalCE
+  deleteAppDataOnUninstall: false
