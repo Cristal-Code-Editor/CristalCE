@@ -50,6 +50,8 @@ export const IPC_CHANNELS = {
   FS_COPY_PATH: 'FS_COPY_PATH',
   /** Renderer → Main: mostrar menú contextual nativo y retornar el ID seleccionado */
   SHOW_CONTEXT_MENU: 'SHOW_CONTEXT_MENU',
+  /** Renderer → Main: abrir diálogo nativo de selección de carpeta */
+  DIALOG_OPEN_FOLDER: 'DIALOG_OPEN_FOLDER',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
