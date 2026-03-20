@@ -24,6 +24,16 @@ export const IPC_CHANNELS = {
   FILE_CLOSE_EDITOR: 'FILE_CLOSE_EDITOR',
   /** Acción genérica del menú nativo → Renderer */
   MENU_ACTION: 'MENU_ACTION',
+
+  // ── File System Operations (invoke/handle) ──────────────
+  /** Renderer → Main: leer contenido de un archivo */
+  FS_READ_FILE: 'FS_READ_FILE',
+  /** Renderer → Main: escribir contenido a un archivo */
+  FS_WRITE_FILE: 'FS_WRITE_FILE',
+  /** Renderer → Main: leer estructura de un directorio */
+  FS_READ_DIRECTORY: 'FS_READ_DIRECTORY',
+  /** Renderer → Main: diálogo "Guardar como…" retorna ruta seleccionada */
+  FS_SAVE_DIALOG: 'FS_SAVE_DIALOG',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
