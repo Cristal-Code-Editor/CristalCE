@@ -395,6 +395,20 @@ ipcMain.handle(
   },
 )
 
+// ─── IPC: Diálogo nativo de selección de carpeta ──────────────────────────────
+
+ipcMain.handle(IPC_CHANNELS.DIALOG_OPEN_FOLDER, async () => {
+  if (!mainWindow) return
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory'],
+  })
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    mainWindow.webContents.send(IPC_CHANNELS.FILE_OPEN_FOLDER, result.filePaths[0])
+  }
+})
+
 app.whenReady().then(() => {
   createWindow()
 
