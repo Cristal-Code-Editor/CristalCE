@@ -11,14 +11,11 @@ export default function Sidebar() {
       className="flex h-full min-w-0 flex-col overflow-hidden select-none"
       style={{ backgroundColor: 'var(--cristal-bg-sidebar)' }}
     >
-      {/* Título de sección con icono de carpeta Phosphor */}
-      <div className="flex h-9 shrink-0 items-center gap-2 px-4">
-        <FolderOpen size={15} weight="light" className="text-[var(--cristal-accent)]" />
-        <span
-          className="text-[11px] font-medium tracking-wide"
-          style={{ color: 'var(--cristal-text-muted)' }}
-        >
-          Explorador de Archivos
+      {/* Título de sección */}
+      <div className="flex h-8 shrink-0 items-center gap-2 px-3">
+        <FolderOpen size={14} weight="light" className="shrink-0 text-[var(--cristal-accent)]" />
+        <span className="truncate text-[11px] font-semibold uppercase tracking-wider text-[var(--cristal-text-muted)]">
+          Explorador
         </span>
       </div>
 
