@@ -63,6 +63,8 @@ export interface CristalAPI {
   copyPath: (targetPath: string) => Promise<void>
   /** Muestra un menú contextual nativo y retorna el id del item seleccionado (o null). */
   showContextMenu: (items: { id: string; label: string; accelerator?: string; separator?: boolean }[]) => Promise<string | null>
+  /** Abre el diálogo nativo para seleccionar carpeta. */
+  openFolderDialog: () => Promise<void>
 
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
@@ -158,6 +160,10 @@ contextBridge.exposeInMainWorld('cristalAPI', {
 
   showContextMenu: (items: { id: string; label: string; accelerator?: string; separator?: boolean }[]): Promise<string | null> => {
     return ipcRenderer.invoke(IPC_CHANNELS.SHOW_CONTEXT_MENU, items)
+  },
+
+  openFolderDialog: (): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DIALOG_OPEN_FOLDER)
   },
 
   windowMinimize: () => {
