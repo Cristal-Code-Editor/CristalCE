@@ -1,133 +1,7 @@
-import { useReducer, useCallback } from 'react'
+import { useReducer, useCallback, useEffect } from 'react'
 import EditorPane, { type TabData } from '../editor/EditorPane'
-
-/* ── Demo content ──────────────────────────────────────── */
-
-const DEMO_TSX = `import { useState, useEffect } from 'react'
-
-interface User {
-  id: number
-  name: string
-  email: string
-  role: 'admin' | 'editor' | 'viewer'
-}
-
-async function fetchUsers(): Promise<User[]> {
-  const res = await fetch('/api/users')
-  if (!res.ok) throw new Error('Failed to fetch users')
-  return res.json()
-}
-
-export default function UserDashboard() {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-
-  useEffect(() => {
-    fetchUsers()
-      .then(setUsers)
-      .finally(() => setLoading(false))
-  }, [])
-
-  const filtered = users.filter((u) =>
-    u.name.toLowerCase().includes(search.toLowerCase())
-  )
-
-  if (loading) return <p>Cargando…</p>
-
-  return (
-    <section className="dashboard">
-      <h1>Users ({filtered.length})</h1>
-      <input
-        type="search"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search users..."
-      />
-      <ul>
-        {filtered.map((user) => (
-          <li key={user.id}>
-            <span className="name">{user.name}</span>
-            <span className="role">{user.role}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
-}
-`
-
-const DEMO_CSS = `/* CristalCE — Component Styles */
-
-:root {
-  --radius: 8px;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dashboard {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.dashboard h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, #00e5ff, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.dashboard input[type="search"] {
-  width: 100%;
-  padding: 0.625rem 1rem;
-  border: 1px solid var(--cristal-border);
-  border-radius: var(--radius);
-  background: var(--cristal-bg-sidebar);
-  color: var(--cristal-text-normal);
-  font-family: inherit;
-  font-size: 0.875rem;
-  outline: none;
-  transition: border-color var(--transition);
-}
-
-.dashboard input[type="search"]:focus {
-  border-color: var(--cristal-accent);
-}
-
-.dashboard ul {
-  list-style: none;
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.dashboard li {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius);
-  background: var(--cristal-bg-hover);
-  transition: transform var(--transition);
-}
-
-.dashboard li:hover {
-  transform: translateX(4px);
-}
-
-/* Animations */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.dashboard li {
-  animation: fade-in 0.3s ease both;
-}
-`
+import { detectLanguage, fileNameFromPath } from '../../utils/languageMap'
+import { useWorkspace } from '../../context/WorkspaceContext'
 
 /* ── State ─────────────────────────────────────────────── */
 
@@ -140,7 +14,11 @@ type Action =
   | { type: 'SELECT_TAB'; id: string }
   | { type: 'CLOSE_TAB'; id: string }
   | { type: 'UPDATE_CONTENT'; id: string; content: string }
-  | { type: 'SAVE'; id: string }
+  | { type: 'MARK_SAVED'; id: string; filePath?: string }
+  | { type: 'OPEN_FILE'; filePath: string; content: string }
+  | { type: 'NEW_FILE' }
+
+let nextId = 1
 
 function reducer(state: EditorState, action: Action): EditorState {
   switch (action.type) {
@@ -166,13 +44,61 @@ function reducer(state: EditorState, action: Action): EditorState {
         ),
       }
 
-    case 'SAVE':
+    case 'MARK_SAVED':
       return {
         ...state,
         tabs: state.tabs.map((t) =>
-          t.id === action.id ? { ...t, savedContent: t.content } : t,
+          t.id === action.id
+            ? {
+                ...t,
+                savedContent: t.content,
+                filePath: action.filePath ?? t.filePath,
+                fileName: action.filePath ? fileNameFromPath(action.filePath) : t.fileName,
+                language: action.filePath ? detectLanguage(fileNameFromPath(action.filePath)) : t.language,
+              }
+            : t,
         ),
       }
+
+    case 'OPEN_FILE': {
+      // Si el archivo ya está abierto, activar esa pestaña
+      const existing = state.tabs.find((t) => t.filePath === action.filePath)
+      if (existing) {
+        return { ...state, activeTabId: existing.id }
+      }
+
+      const fileName = fileNameFromPath(action.filePath)
+      const language = detectLanguage(fileName)
+      const id = `file-${nextId++}`
+      const tab: TabData = {
+        id,
+        fileName,
+        language,
+        content: action.content,
+        savedContent: action.content,
+        filePath: action.filePath,
+      }
+      return {
+        tabs: [...state.tabs, tab],
+        activeTabId: id,
+      }
+    }
+
+    case 'NEW_FILE': {
+      const id = `untitled-${nextId++}`
+      const tab: TabData = {
+        id,
+        fileName: `Sin título-${nextId}`,
+        language: 'plaintext',
+        content: '',
+        savedContent: '',
+        filePath: null,
+      }
+      return {
+        tabs: [...state.tabs, tab],
+        activeTabId: id,
+      }
+    }
 
     default:
       return state
@@ -180,37 +106,108 @@ function reducer(state: EditorState, action: Action): EditorState {
 }
 
 const INITIAL_STATE: EditorState = {
-  tabs: [
-    {
-      id: '1',
-      fileName: 'Dashboard.tsx',
-      language: 'typescriptreact',
-      content: DEMO_TSX,
-      savedContent: DEMO_TSX,
-    },
-    {
-      id: '2',
-      fileName: 'styles.css',
-      language: 'css',
-      content: DEMO_CSS,
-      savedContent: DEMO_CSS,
-    },
-  ],
-  activeTabId: '1',
+  tabs: [],
+  activeTabId: null,
 }
 
 /* ── Component ─────────────────────────────────────────── */
 
 export default function EditorArea() {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
+  const { registerFileHandler } = useWorkspace()
 
+  // ── Registrar handler para apertura de archivos desde Sidebar ──
+  const openFileFromPath = useCallback(async (filePath: string) => {
+    try {
+      const content = await window.cristalAPI.readFile(filePath)
+      dispatch({ type: 'OPEN_FILE', filePath, content })
+    } catch (err) {
+      console.error('[EditorArea] Error reading file:', err)
+    }
+  }, [])
+
+  useEffect(() => {
+    return registerFileHandler(openFileFromPath)
+  }, [registerFileHandler, openFileFromPath])
+
+  // ── IPC: Abrir archivo desde menú ─────────────────────
+  useEffect(() => {
+    const unsubFile = window.cristalAPI.onFileOpen(async (filePath) => {
+      try {
+        const content = await window.cristalAPI.readFile(filePath)
+        dispatch({ type: 'OPEN_FILE', filePath, content })
+      } catch (err) {
+        console.error('[EditorArea] Error reading file:', err)
+      }
+    })
+
+    const unsubMenu = window.cristalAPI.onMenuAction((action) => {
+      switch (action) {
+        case 'FILE_NEW':
+          dispatch({ type: 'NEW_FILE' })
+          break
+        case 'FILE_SAVE':
+          handleSaveActive()
+          break
+        case 'FILE_SAVE_AS':
+          handleSaveAsActive()
+          break
+        case 'FILE_CLOSE_EDITOR':
+          if (state.activeTabId) dispatch({ type: 'CLOSE_TAB', id: state.activeTabId })
+          break
+      }
+    })
+
+    return () => {
+      unsubFile()
+      unsubMenu()
+    }
+  }) // Re-subscribe on every render to capture current state.activeTabId
+
+  // ── Save helpers ──────────────────────────────────────
+  const saveTab = useCallback(async (tab: TabData) => {
+    if (tab.filePath) {
+      await window.cristalAPI.writeFile(tab.filePath, tab.content)
+      dispatch({ type: 'MARK_SAVED', id: tab.id })
+    } else {
+      // Archivo nuevo → pedir ruta con "Guardar como"
+      const chosenPath = await window.cristalAPI.showSaveDialog()
+      if (chosenPath) {
+        await window.cristalAPI.writeFile(chosenPath, tab.content)
+        dispatch({ type: 'MARK_SAVED', id: tab.id, filePath: chosenPath })
+      }
+    }
+  }, [])
+
+  const handleSaveActive = useCallback(() => {
+    const tab = state.tabs.find((t) => t.id === state.activeTabId)
+    if (tab) saveTab(tab)
+  }, [state.tabs, state.activeTabId, saveTab])
+
+  const handleSaveAsActive = useCallback(async () => {
+    const tab = state.tabs.find((t) => t.id === state.activeTabId)
+    if (!tab) return
+    const chosenPath = await window.cristalAPI.showSaveDialog(tab.filePath ?? undefined)
+    if (chosenPath) {
+      await window.cristalAPI.writeFile(chosenPath, tab.content)
+      dispatch({ type: 'MARK_SAVED', id: tab.id, filePath: chosenPath })
+    }
+  }, [state.tabs, state.activeTabId])
+
+  // ── Callbacks for EditorPane ──────────────────────────
   const handleTabSelect = useCallback((id: string) => dispatch({ type: 'SELECT_TAB', id }), [])
   const handleTabClose = useCallback((id: string) => dispatch({ type: 'CLOSE_TAB', id }), [])
   const handleContentChange = useCallback(
     (id: string, content: string) => dispatch({ type: 'UPDATE_CONTENT', id, content }),
     [],
   )
-  const handleSave = useCallback((id: string) => dispatch({ type: 'SAVE', id }), [])
+  const handleSave = useCallback(
+    (id: string) => {
+      const tab = state.tabs.find((t) => t.id === id)
+      if (tab) saveTab(tab)
+    },
+    [state.tabs, saveTab],
+  )
 
   return (
     <EditorPane
