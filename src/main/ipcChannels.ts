@@ -38,6 +38,16 @@ export const IPC_CHANNELS = {
   FS_CREATE_FILE: 'FS_CREATE_FILE',
   /** Renderer → Main: crear un directorio */
   FS_CREATE_DIRECTORY: 'FS_CREATE_DIRECTORY',
+  /** Renderer → Main: renombrar archivo o directorio */
+  FS_RENAME: 'FS_RENAME',
+  /** Renderer → Main: eliminar archivo o directorio */
+  FS_DELETE: 'FS_DELETE',
+  /** Renderer → Main: mover archivo/directorio a otro directorio */
+  FS_MOVE: 'FS_MOVE',
+  /** Renderer → Main: abrir ruta en el explorador del SO */
+  FS_REVEAL_IN_EXPLORER: 'FS_REVEAL_IN_EXPLORER',
+  /** Renderer → Main: copiar ruta al portapapeles */
+  FS_COPY_PATH: 'FS_COPY_PATH',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
