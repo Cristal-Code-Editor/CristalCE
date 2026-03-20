@@ -47,6 +47,10 @@ export interface CristalAPI {
   readDirectory: (dirPath: string) => Promise<DirEntry[]>
   /** Abre diálogo nativo "Guardar como…". Retorna ruta o null si cancela. */
   showSaveDialog: (defaultPath?: string) => Promise<string | null>
+  /** Crea un archivo vacío en la ruta indicada. */
+  createFile: (filePath: string) => Promise<void>
+  /** Crea un directorio en la ruta indicada (recursive). */
+  createDirectory: (dirPath: string) => Promise<void>
 
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
@@ -110,6 +114,14 @@ contextBridge.exposeInMainWorld('cristalAPI', {
 
   showSaveDialog: (defaultPath?: string): Promise<string | null> => {
     return ipcRenderer.invoke(IPC_CHANNELS.FS_SAVE_DIALOG, defaultPath)
+  },
+
+  createFile: (filePath: string): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_CREATE_FILE, filePath)
+  },
+
+  createDirectory: (dirPath: string): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_CREATE_DIRECTORY, dirPath)
   },
 
   windowMinimize: () => {
