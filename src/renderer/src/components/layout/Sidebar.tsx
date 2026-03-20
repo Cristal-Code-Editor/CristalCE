@@ -15,6 +15,11 @@ import {
   FolderPlus,
   ArrowClockwise,
   ArrowsInSimple,
+  PencilSimple,
+  Trash,
+  Copy,
+  FolderOpen as FolderReveal,
+  ArrowSquareOut,
 } from '@phosphor-icons/react'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import { useWorkspace } from '../../context/WorkspaceContext'
@@ -137,6 +142,8 @@ interface ContextMenuState {
 interface ContextMenuItem {
   label: string
   action: () => void
+  icon?: PhosphorIcon
+  shortcut?: string
   danger?: boolean
   separator?: boolean
 }
@@ -158,27 +165,53 @@ function ContextMenu({
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose()
     }
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('keydown', keyHandler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('keydown', keyHandler)
+    }
   }, [onClose])
+
+  // Ajustar posición para que no se salga de la ventana
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    if (rect.right > window.innerWidth) {
+      el.style.left = `${window.innerWidth - rect.width - 6}px`
+    }
+    if (rect.bottom > window.innerHeight) {
+      el.style.top = `${window.innerHeight - rect.height - 6}px`
+    }
+  }, [x, y])
 
   return (
     <div
       ref={ref}
-      className="min-w-[180px] rounded-md border py-1 shadow-xl"
+      className="min-w-[200px] overflow-hidden rounded-lg border py-[5px]"
       onContextMenu={(e) => e.preventDefault()}
       style={{
         position: 'fixed',
         left: x,
         top: y,
         zIndex: 9999,
-        backgroundColor: 'var(--cristal-bg-sidebar)',
-        borderColor: 'var(--cristal-border)',
+        backgroundColor: 'rgba(30, 30, 32, 0.96)',
+        backdropFilter: 'blur(12px)',
+        borderColor: 'rgba(255,255,255,0.08)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3)',
       }}
     >
       {items.map((item, i) =>
         item.separator ? (
-          <div key={i} className="mx-2 my-1 h-px" style={{ backgroundColor: 'var(--cristal-border)' }} />
+          <div
+            key={i}
+            className="mx-[10px] my-[5px] h-px"
+            style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}
+          />
         ) : (
           <div
             key={i}
@@ -186,10 +219,37 @@ function ContextMenu({
               item.action()
               onClose()
             }}
-            className="flex h-[26px] cursor-pointer items-center px-3 text-[12px] hover:bg-white/8"
+            className="group/item mx-[5px] flex h-[28px] cursor-pointer items-center gap-2.5 rounded-md px-2 text-[12px] transition-colors"
             style={{ color: item.danger ? '#f44747' : 'var(--cristal-text-normal)' }}
+            onMouseEnter={(e) => {
+              ;(e.currentTarget as HTMLElement).style.backgroundColor = item.danger
+                ? 'rgba(244, 71, 71, 0.12)'
+                : 'rgba(255,255,255,0.06)'
+            }}
+            onMouseLeave={(e) => {
+              ;(e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+            }}
           >
-            {item.label}
+            {item.icon && (
+              <item.icon
+                size={14}
+                weight="light"
+                className="shrink-0"
+                style={{
+                  color: item.danger ? '#f44747' : 'var(--cristal-text-muted)',
+                  opacity: 0.85,
+                }}
+              />
+            )}
+            <span className="flex-1 truncate">{item.label}</span>
+            {item.shortcut && (
+              <span
+                className="ml-4 shrink-0 text-[10px]"
+                style={{ color: 'var(--cristal-text-faint)' }}
+              >
+                {item.shortcut}
+              </span>
+            )}
           </div>
         ),
       )}
@@ -557,6 +617,7 @@ export default function Sidebar() {
       if (!entry.isDirectory) {
         items.push({
           label: 'Abrir',
+          icon: ArrowSquareOut,
           action: () => requestOpenFile(entry.path),
         })
         items.push({ label: '', action: () => {}, separator: true })
@@ -565,8 +626,8 @@ export default function Sidebar() {
       if (entry.isDirectory) {
         items.push({
           label: 'Nuevo archivo',
+          icon: FilePlus,
           action: () => {
-            // Expandir la carpeta y crear dentro
             handleToggle(entry.path, true).then(() => {
               setCreatingIn({ parentPath: entry.path, type: 'file' })
             })
@@ -574,6 +635,7 @@ export default function Sidebar() {
         })
         items.push({
           label: 'Nueva carpeta',
+          icon: FolderPlus,
           action: () => {
             handleToggle(entry.path, true).then(() => {
               setCreatingIn({ parentPath: entry.path, type: 'folder' })
@@ -585,11 +647,15 @@ export default function Sidebar() {
 
       items.push({
         label: 'Renombrar',
+        icon: PencilSimple,
+        shortcut: 'F2',
         action: () => setRenamingPath(entry.path),
       })
 
       items.push({
         label: 'Copiar ruta',
+        icon: Copy,
+        shortcut: 'Shift+Alt+C',
         action: () => window.cristalAPI.copyPath(entry.path),
       })
 
@@ -597,6 +663,7 @@ export default function Sidebar() {
 
       items.push({
         label: 'Revelar en el Explorador',
+        icon: FolderReveal,
         action: () => window.cristalAPI.revealInExplorer(entry.path),
       })
 
@@ -604,6 +671,8 @@ export default function Sidebar() {
 
       items.push({
         label: 'Eliminar',
+        icon: Trash,
+        shortcut: 'Supr',
         danger: true,
         action: async () => {
           try {
