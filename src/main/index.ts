@@ -194,11 +194,11 @@ ipcMain.on('window-close', () => {
   mainWindow?.close()
 })
 
-ipcMain.on('popup-app-menu', (_event, menuLabel: string) => {
+ipcMain.on('popup-app-menu', (_event, menuLabel: string, x: number, y: number) => {
   const appMenu = Menu.getApplicationMenu()
   const target = appMenu?.items.find((item) => item.label === menuLabel)
   if (target?.submenu && mainWindow) {
-    target.submenu.popup({ window: mainWindow })
+    target.submenu.popup({ window: mainWindow, x: Math.round(x), y: Math.round(y) })
   }
 })
 
