@@ -18,6 +18,26 @@ const handleBeforeMount: BeforeMount = (monaco) => {
   })
 }
 
+function EditorLoading() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#28282a',
+        color: '#5a5a5e',
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 13,
+      }}
+    >
+      Cargando editor…
+    </div>
+  )
+}
+
 export default function CodeEditor() {
   return (
     <Editor
@@ -27,6 +47,7 @@ export default function CodeEditor() {
       defaultValue={DEFAULT_CODE}
       theme="cristal-dark"
       beforeMount={handleBeforeMount}
+      loading={<EditorLoading />}
       options={{
         minimap: { enabled: false },
         fontSize: 14,
