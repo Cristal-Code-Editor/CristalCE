@@ -1,6 +1,6 @@
-import { app, BrowserWindow, ipcMain, Menu, dialog, shell, type MenuItemConstructorOptions } from 'electron'
-import { join } from 'path'
-import { readFile, writeFile, readdir, mkdir } from 'fs/promises'
+import { app, BrowserWindow, ipcMain, Menu, dialog, shell, clipboard, type MenuItemConstructorOptions } from 'electron'
+import { join, dirname, basename } from 'path'
+import { readFile, writeFile, readdir, mkdir, rename, rm } from 'fs/promises'
 import { is } from '@electron-toolkit/utils'
 import { IPC_CHANNELS } from './ipcChannels'
 
@@ -249,6 +249,8 @@ ipcMain.handle(
 ipcMain.handle(
   IPC_CHANNELS.FS_CREATE_FILE,
   async (_event, filePath: string): Promise<void> => {
+    // Crear directorios intermedios si no existen
+    await mkdir(dirname(filePath), { recursive: true })
     await writeFile(filePath, '', 'utf-8')
   },
 )
@@ -257,6 +259,45 @@ ipcMain.handle(
   IPC_CHANNELS.FS_CREATE_DIRECTORY,
   async (_event, dirPath: string): Promise<void> => {
     await mkdir(dirPath, { recursive: true })
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_RENAME,
+  async (_event, oldPath: string, newName: string): Promise<string> => {
+    const newPath = join(dirname(oldPath), newName)
+    await rename(oldPath, newPath)
+    return newPath
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_DELETE,
+  async (_event, targetPath: string): Promise<void> => {
+    await rm(targetPath, { recursive: true })
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_MOVE,
+  async (_event, sourcePath: string, destDir: string): Promise<string> => {
+    const newPath = join(destDir, basename(sourcePath))
+    await rename(sourcePath, newPath)
+    return newPath
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_REVEAL_IN_EXPLORER,
+  async (_event, targetPath: string): Promise<void> => {
+    shell.showItemInFolder(targetPath)
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_COPY_PATH,
+  async (_event, targetPath: string): Promise<void> => {
+    clipboard.writeText(targetPath)
   },
 )
 
