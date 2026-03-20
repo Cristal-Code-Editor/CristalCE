@@ -34,6 +34,10 @@ export const IPC_CHANNELS = {
   FS_READ_DIRECTORY: 'FS_READ_DIRECTORY',
   /** Renderer → Main: diálogo "Guardar como…" retorna ruta seleccionada */
   FS_SAVE_DIALOG: 'FS_SAVE_DIALOG',
+  /** Renderer → Main: crear un archivo vacío */
+  FS_CREATE_FILE: 'FS_CREATE_FILE',
+  /** Renderer → Main: crear un directorio */
+  FS_CREATE_DIRECTORY: 'FS_CREATE_DIRECTORY',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
