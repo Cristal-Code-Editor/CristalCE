@@ -52,3 +52,17 @@ body {
   color: var(--cristal-text-normal);
   font-size: 13px;
 }
+
+/* Resize handle entre Sidebar y Editor */
+.cristal-resize-handle {
+  width: 4px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  background-color: var(--cristal-border);
+  transition: background-color 0.15s ease;
+}
+
+.cristal-resize-handle:hover,
+.cristal-resize-handle[data-resize-handle-active] {
+  background-color: var(--cristal-accent);
+}
