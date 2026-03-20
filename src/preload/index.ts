@@ -9,7 +9,18 @@ import { IPC_CHANNELS, type IpcChannel } from '../main/ipcChannels'
  *   window.cristalAPI.onMenuAction((action) => { ... })
  *   window.cristalAPI.onFileOpen((filePath) => { ... })
  *   window.cristalAPI.onFolderOpen((folderPath) => { ... })
+ *   window.cristalAPI.readFile(path)
+ *   window.cristalAPI.writeFile(path, content)
+ *   window.cristalAPI.readDirectory(path)
+ *   window.cristalAPI.showSaveDialog(defaultPath?)
  */
+
+export interface DirEntry {
+  name: string
+  path: string
+  isDirectory: boolean
+}
+
 export interface CristalAPI {
   /**
    * Escucha acciones del menú nativo (New File, Save, Close Editor, etc.).
@@ -26,6 +37,17 @@ export interface CristalAPI {
    * Recibe la ruta absoluta de la carpeta.
    */
   onFolderOpen: (callback: (folderPath: string) => void) => () => void
+
+  // ── File System (invoke/handle) ─────────────────────────
+  /** Lee contenido de un archivo como string UTF-8. */
+  readFile: (filePath: string) => Promise<string>
+  /** Escribe contenido string UTF-8 a un archivo. */
+  writeFile: (filePath: string, content: string) => Promise<void>
+  /** Lista entradas de un directorio (carpetas primero, sin dotfiles). */
+  readDirectory: (dirPath: string) => Promise<DirEntry[]>
+  /** Abre diálogo nativo "Guardar como…". Retorna ruta o null si cancela. */
+  showSaveDialog: (defaultPath?: string) => Promise<string | null>
+
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
   /** Alterna maximizar / restaurar la ventana principal. */
@@ -71,6 +93,23 @@ contextBridge.exposeInMainWorld('cristalAPI', {
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.FILE_OPEN_FOLDER, handler)
     }
+  },
+
+  // ── File System Operations ──────────────────────────────
+  readFile: (filePath: string): Promise<string> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_READ_FILE, filePath)
+  },
+
+  writeFile: (filePath: string, content: string): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_WRITE_FILE, filePath, content)
+  },
+
+  readDirectory: (dirPath: string): Promise<DirEntry[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_READ_DIRECTORY, dirPath)
+  },
+
+  showSaveDialog: (defaultPath?: string): Promise<string | null> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_SAVE_DIALOG, defaultPath)
   },
 
   windowMinimize: () => {

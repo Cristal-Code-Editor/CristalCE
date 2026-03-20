@@ -1,4 +1,6 @@
-import type { CristalAPI } from '../preload/index'
+import type { CristalAPI, DirEntry } from '../preload/index'
+
+export type { DirEntry }
 
 /**
  * Declaración global de la API inyectada por contextBridge.
