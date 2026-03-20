@@ -47,10 +47,20 @@ export interface CristalAPI {
   readDirectory: (dirPath: string) => Promise<DirEntry[]>
   /** Abre diálogo nativo "Guardar como…". Retorna ruta o null si cancela. */
   showSaveDialog: (defaultPath?: string) => Promise<string | null>
-  /** Crea un archivo vacío en la ruta indicada. */
+  /** Crea un archivo vacío en la ruta indicada (crea directorios intermedios). */
   createFile: (filePath: string) => Promise<void>
   /** Crea un directorio en la ruta indicada (recursive). */
   createDirectory: (dirPath: string) => Promise<void>
+  /** Renombra un archivo o directorio. Retorna la nueva ruta absoluta. */
+  renamePath: (oldPath: string, newName: string) => Promise<string>
+  /** Elimina un archivo o directorio (recursivo). */
+  deletePath: (targetPath: string) => Promise<void>
+  /** Mueve un archivo/directorio a otro directorio. Retorna nueva ruta. */
+  movePath: (sourcePath: string, destDir: string) => Promise<string>
+  /** Abre la ubicación del archivo/carpeta en el explorador del SO. */
+  revealInExplorer: (targetPath: string) => Promise<void>
+  /** Copia la ruta al portapapeles del SO. */
+  copyPath: (targetPath: string) => Promise<void>
 
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
@@ -122,6 +132,26 @@ contextBridge.exposeInMainWorld('cristalAPI', {
 
   createDirectory: (dirPath: string): Promise<void> => {
     return ipcRenderer.invoke(IPC_CHANNELS.FS_CREATE_DIRECTORY, dirPath)
+  },
+
+  renamePath: (oldPath: string, newName: string): Promise<string> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_RENAME, oldPath, newName)
+  },
+
+  deletePath: (targetPath: string): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_DELETE, targetPath)
+  },
+
+  movePath: (sourcePath: string, destDir: string): Promise<string> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_MOVE, sourcePath, destDir)
+  },
+
+  revealInExplorer: (targetPath: string): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_REVEAL_IN_EXPLORER, targetPath)
+  },
+
+  copyPath: (targetPath: string): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FS_COPY_PATH, targetPath)
   },
 
   windowMinimize: () => {
