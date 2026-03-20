@@ -612,11 +612,21 @@ export default function Sidebar() {
       </div>
 
       {!state.rootPath ? (
-        <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
-          <Folder size={32} weight="light" style={{ color: 'var(--cristal-text-faint)', marginBottom: 8 }} />
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
+          <Folder size={32} weight="light" style={{ color: 'var(--cristal-text-faint)' }} />
           <span className="text-[11px]" style={{ color: 'var(--cristal-text-faint)' }}>
             Abrí una carpeta para explorar archivos
           </span>
+          <button
+            onClick={() => window.cristalAPI.openFolderDialog()}
+            className="mt-1 rounded-[4px] px-4 py-[5px] text-[12px] font-medium transition-colors hover:brightness-125"
+            style={{
+              backgroundColor: 'var(--cristal-accent)',
+              color: '#fff',
+            }}
+          >
+            Abrir Carpeta
+          </button>
         </div>
       ) : (
         <>
