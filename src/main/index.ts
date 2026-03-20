@@ -53,6 +53,8 @@ function createWindow(): void {
   // Cargar la UI del Renderer (HMR en dev, archivo estático en producción)
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    // DevTools abiertas automáticamente en desarrollo
+    mainWindow.webContents.openDevTools({ mode: 'right' })
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
