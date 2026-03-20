@@ -61,6 +61,8 @@ export interface CristalAPI {
   revealInExplorer: (targetPath: string) => Promise<void>
   /** Copia la ruta al portapapeles del SO. */
   copyPath: (targetPath: string) => Promise<void>
+  /** Muestra un menú contextual nativo y retorna el id del item seleccionado (o null). */
+  showContextMenu: (items: { id: string; label: string; accelerator?: string; separator?: boolean }[]) => Promise<string | null>
 
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
@@ -152,6 +154,10 @@ contextBridge.exposeInMainWorld('cristalAPI', {
 
   copyPath: (targetPath: string): Promise<void> => {
     return ipcRenderer.invoke(IPC_CHANNELS.FS_COPY_PATH, targetPath)
+  },
+
+  showContextMenu: (items: { id: string; label: string; accelerator?: string; separator?: boolean }[]): Promise<string | null> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SHOW_CONTEXT_MENU, items)
   },
 
   windowMinimize: () => {
