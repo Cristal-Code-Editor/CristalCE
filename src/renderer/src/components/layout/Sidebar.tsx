@@ -48,27 +48,50 @@ interface DirEntry {
   isDirectory: boolean
 }
 
-/* ── Inline creation input ─────────────────────────────── */
+/* ── helpers ───────────────────────────────────────────── */
+
+/** Extrae el nombre del directorio padre de una ruta. */
+function parentDir(p: string): string {
+  const sep = p.includes('/') ? '/' : '\\'
+  return p.substring(0, p.lastIndexOf(sep))
+}
+
+/** Construye una ruta hija dentro de un directorio. */
+function childPath(dir: string, name: string): string {
+  const sep = dir.includes('/') ? '/' : '\\'
+  return dir.endsWith(sep) ? dir + name : dir + sep + name
+}
+
+/* ── Inline Input (create / rename) ────────────────────── */
 
 function InlineInput({
   type,
+  initialValue,
   onConfirm,
   onCancel,
 }: {
-  type: 'file' | 'folder'
+  type: 'file' | 'folder' | 'rename'
+  initialValue?: string
   onConfirm: (name: string) => void
   onCancel: () => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(initialValue ?? '')
 
   useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+    const el = inputRef.current
+    if (!el) return
+    el.focus()
+    // Si es rename, seleccionar el nombre sin extensión
+    if (initialValue) {
+      const dotIdx = initialValue.lastIndexOf('.')
+      el.setSelectionRange(0, dotIdx > 0 ? dotIdx : initialValue.length)
+    }
+  }, [initialValue])
 
   const submit = () => {
     const trimmed = value.trim()
-    if (trimmed) onConfirm(trimmed)
+    if (trimmed && trimmed !== initialValue) onConfirm(trimmed)
     else onCancel()
   }
 
@@ -77,7 +100,9 @@ function InlineInput({
 
   return (
     <div className="flex h-[22px] items-center gap-1.5 pr-2">
-      <Icon size={14} weight="light" className="shrink-0" style={{ color: iconColor }} />
+      {type !== 'rename' && (
+        <Icon size={14} weight="light" className="shrink-0" style={{ color: iconColor }} />
+      )}
       <input
         ref={inputRef}
         value={value}
@@ -85,8 +110,10 @@ function InlineInput({
         onKeyDown={(e) => {
           if (e.key === 'Enter') submit()
           if (e.key === 'Escape') onCancel()
+          e.stopPropagation()
         }}
         onBlur={submit}
+        onClick={(e) => e.stopPropagation()}
         className="h-[18px] min-w-0 flex-1 rounded-sm border px-1 text-[11px] outline-none"
         style={{
           backgroundColor: 'var(--cristal-bg-editor)',
@@ -99,6 +126,80 @@ function InlineInput({
   )
 }
 
+/* ── Context Menu (portal-free simple absolute) ────────── */
+
+interface ContextMenuState {
+  x: number
+  y: number
+  entry: DirEntry
+}
+
+interface ContextMenuItem {
+  label: string
+  action: () => void
+  danger?: boolean
+  separator?: boolean
+}
+
+function ContextMenu({
+  items,
+  x,
+  y,
+  onClose,
+}: {
+  items: ContextMenuItem[]
+  x: number
+  y: number
+  onClose: () => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [onClose])
+
+  return (
+    <div
+      ref={ref}
+      className="min-w-[180px] rounded-md border py-1 shadow-xl"
+      onContextMenu={(e) => e.preventDefault()}
+      style={{
+        position: 'fixed',
+        left: x,
+        top: y,
+        zIndex: 9999,
+        backgroundColor: 'var(--cristal-bg-sidebar)',
+        borderColor: 'var(--cristal-border)',
+      }}
+    >
+      {items.map((item, i) =>
+        item.separator ? (
+          <div key={i} className="mx-2 my-1 h-px" style={{ backgroundColor: 'var(--cristal-border)' }} />
+        ) : (
+          <div
+            key={i}
+            onClick={() => {
+              item.action()
+              onClose()
+            }}
+            className="flex h-[26px] cursor-pointer items-center px-3 text-[12px] hover:bg-white/8"
+            style={{ color: item.danger ? '#f44747' : 'var(--cristal-text-normal)' }}
+          >
+            {item.label}
+          </div>
+        ),
+      )}
+    </div>
+  )
+}
+
+/* ── Drag ghost data type ──────────────────────────────── */
+const DRAG_MIME = 'application/x-cristal-tree-path'
+
 /* ── Tree Node (controlled expand state) ───────────────── */
 
 function TreeNode({
@@ -110,6 +211,12 @@ function TreeNode({
   onFileClick,
   creatingIn,
   onCreationDone,
+  renamingPath,
+  onRenameConfirm,
+  onRenameCancel,
+  onContextMenu,
+  onDrop,
+  selectedPath,
 }: {
   entry: DirEntry
   depth: number
@@ -119,10 +226,18 @@ function TreeNode({
   onFileClick: (filePath: string) => void
   creatingIn: { parentPath: string; type: 'file' | 'folder' } | null
   onCreationDone: () => void
+  renamingPath: string | null
+  onRenameConfirm: (oldPath: string, newName: string) => void
+  onRenameCancel: () => void
+  onContextMenu: (e: React.MouseEvent, entry: DirEntry) => void
+  onDrop: (sourcePath: string, destDir: string) => void
+  selectedPath: string | null
 }) {
   const expanded = expandedPaths.has(entry.path)
   const children = childrenCache.get(entry.path) ?? null
   const [loading, setLoading] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const isRenaming = renamingPath === entry.path
 
   const toggle = useCallback(async () => {
     if (!entry.isDirectory) {
@@ -153,9 +268,10 @@ function TreeNode({
     : getFileIcon(entry.name)
 
   const isCreatingHere = creatingIn?.parentPath === entry.path
+  const isSelected = selectedPath === entry.path
 
   const handleCreate = async (name: string) => {
-    const newPath = entry.path + (entry.path.endsWith('/') || entry.path.endsWith('\\') ? '' : '/') + name
+    const newPath = childPath(entry.path, name)
     try {
       if (creatingIn!.type === 'folder') {
         await window.cristalAPI.createDirectory(newPath)
@@ -168,24 +284,78 @@ function TreeNode({
     onCreationDone()
   }
 
+  /* ── Drag & Drop ── */
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData(DRAG_MIME, entry.path)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!entry.isDirectory) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOver(true)
+  }
+
+  const handleDragLeave = () => setDragOver(false)
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    const sourcePath = e.dataTransfer.getData(DRAG_MIME)
+    if (sourcePath && sourcePath !== entry.path && entry.isDirectory) {
+      onDrop(sourcePath, entry.path)
+    }
+  }
+
+  const paddingLeft = `${12 + depth * 12}px`
+
+  if (isRenaming) {
+    return (
+      <div style={{ paddingLeft }} className="pr-2">
+        <div className="flex h-[22px] items-center gap-1.5">
+          <FileIcon size={14} weight="light" className="shrink-0" style={{ color }} />
+          <InlineInput
+            type="rename"
+            initialValue={entry.name}
+            onConfirm={(newName) => onRenameConfirm(entry.path, newName)}
+            onCancel={onRenameCancel}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <div
         onClick={toggle}
+        onContextMenu={(e) => onContextMenu(e, entry)}
+        draggable
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         className="flex h-[22px] cursor-pointer items-center gap-1.5 pr-2 text-[12px] hover:bg-white/5"
         style={{
-          paddingLeft: `${12 + depth * 12}px`,
+          paddingLeft,
           color: entry.isDirectory ? 'var(--cristal-text-normal)' : 'var(--cristal-text-muted)',
+          backgroundColor: dragOver
+            ? 'rgba(255,255,255,0.08)'
+            : isSelected
+              ? 'rgba(255,255,255,0.06)'
+              : undefined,
         }}
       >
-        {entry.isDirectory && (
+        {entry.isDirectory ? (
           expanded ? (
             <CaretDown size={10} weight="bold" className="shrink-0" style={{ color: 'var(--cristal-text-muted)' }} />
           ) : (
             <CaretRight size={10} weight="bold" className="shrink-0" style={{ color: 'var(--cristal-text-muted)' }} />
           )
+        ) : (
+          <span style={{ width: 10, flexShrink: 0 }} />
         )}
-        {!entry.isDirectory && <span style={{ width: 10, flexShrink: 0 }} />}
 
         <FileIcon size={14} weight="light" className="shrink-0" style={{ color }} />
         <span className="truncate whitespace-nowrap">{entry.name}</span>
@@ -207,19 +377,26 @@ function TreeNode({
         </div>
       )}
 
-      {expanded && children?.map((child) => (
-        <TreeNode
-          key={child.path}
-          entry={child}
-          depth={depth + 1}
-          expandedPaths={expandedPaths}
-          childrenCache={childrenCache}
-          onToggle={onToggle}
-          onFileClick={onFileClick}
-          creatingIn={creatingIn}
-          onCreationDone={onCreationDone}
-        />
-      ))}
+      {expanded &&
+        children?.map((child) => (
+          <TreeNode
+            key={child.path}
+            entry={child}
+            depth={depth + 1}
+            expandedPaths={expandedPaths}
+            childrenCache={childrenCache}
+            onToggle={onToggle}
+            onFileClick={onFileClick}
+            creatingIn={creatingIn}
+            onCreationDone={onCreationDone}
+            renamingPath={renamingPath}
+            onRenameConfirm={onRenameConfirm}
+            onRenameCancel={onRenameCancel}
+            onContextMenu={onContextMenu}
+            onDrop={onDrop}
+            selectedPath={selectedPath}
+          />
+        ))}
     </>
   )
 }
@@ -256,6 +433,9 @@ export default function Sidebar() {
   const [childrenCache, setChildrenCache] = useState<Map<string, DirEntry[]>>(new Map())
   const [creatingIn, setCreatingIn] = useState<{ parentPath: string; type: 'file' | 'folder' } | null>(null)
   const [rootCollapsed, setRootCollapsed] = useState(false)
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+  const [renamingPath, setRenamingPath] = useState<string | null>(null)
+  const [selectedPath, setSelectedPath] = useState<string | null>(null)
 
   // Cargar directorio raíz cuando cambia rootPath
   useEffect(() => {
@@ -278,25 +458,45 @@ export default function Sidebar() {
     }
   }, [state.rootPath])
 
-  const handleToggle = useCallback(async (path: string, shouldExpand: boolean) => {
-    if (shouldExpand) {
-      // Load children if not cached
-      if (!childrenCache.has(path)) {
-        const result = await window.cristalAPI.readDirectory(path)
-        setChildrenCache((prev) => new Map(prev).set(path, result))
+  /** Refrescar un directorio (raíz o sub) y actualizar cache. */
+  const refreshDir = useCallback(
+    async (dirPath: string) => {
+      try {
+        const result = await window.cristalAPI.readDirectory(dirPath)
+        if (dirPath === state.rootPath) {
+          setEntries(result)
+        } else {
+          setChildrenCache((prev) => new Map(prev).set(dirPath, result))
+        }
+      } catch {
+        /* ignore */
       }
-      setExpandedPaths((prev) => new Set(prev).add(path))
-    } else {
-      setExpandedPaths((prev) => {
-        const next = new Set(prev)
-        next.delete(path)
-        return next
-      })
-    }
-  }, [childrenCache])
+    },
+    [state.rootPath],
+  )
+
+  const handleToggle = useCallback(
+    async (path: string, shouldExpand: boolean) => {
+      if (shouldExpand) {
+        if (!childrenCache.has(path)) {
+          const result = await window.cristalAPI.readDirectory(path)
+          setChildrenCache((prev) => new Map(prev).set(path, result))
+        }
+        setExpandedPaths((prev) => new Set(prev).add(path))
+      } else {
+        setExpandedPaths((prev) => {
+          const next = new Set(prev)
+          next.delete(path)
+          return next
+        })
+      }
+    },
+    [childrenCache],
+  )
 
   const handleFileClick = useCallback(
     (filePath: string) => {
+      setSelectedPath(filePath)
       requestOpenFile(filePath)
     },
     [requestOpenFile],
@@ -306,17 +506,13 @@ export default function Sidebar() {
 
   const handleNewFile = useCallback(() => {
     if (!state.rootPath) return
-    // Find the first expanded folder, or use root
-    const targetPath = state.rootPath
-    setCreatingIn({ parentPath: targetPath, type: 'file' })
-    // Ensure root is visible
+    setCreatingIn({ parentPath: state.rootPath, type: 'file' })
     setRootCollapsed(false)
   }, [state.rootPath])
 
   const handleNewFolder = useCallback(() => {
     if (!state.rootPath) return
-    const targetPath = state.rootPath
-    setCreatingIn({ parentPath: targetPath, type: 'folder' })
+    setCreatingIn({ parentPath: state.rootPath, type: 'folder' })
     setRootCollapsed(false)
   }, [state.rootPath])
 
@@ -330,27 +526,166 @@ export default function Sidebar() {
     setExpandedPaths(new Set())
   }, [])
 
-  const handleCreationDone = useCallback(async () => {
-    const parentPath = creatingIn?.parentPath
-    setCreatingIn(null)
-    // Refresh the parent directory
-    if (parentPath) {
-      try {
-        const result = await window.cristalAPI.readDirectory(parentPath)
-        if (parentPath === state.rootPath) {
-          setEntries(result)
-        } else {
-          setChildrenCache((prev) => new Map(prev).set(parentPath, result))
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [creatingIn, state.rootPath])
+  const handleCreationDone = useCallback(
+    async () => {
+      const p = creatingIn?.parentPath
+      setCreatingIn(null)
+      if (p) await refreshDir(p)
+    },
+    [creatingIn, refreshDir],
+  )
 
   const toggleRootCollapsed = useCallback(() => {
     setRootCollapsed((prev) => !prev)
   }, [])
+
+  /* ── Context menu ── */
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, entry: DirEntry) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSelectedPath(entry.path)
+    setContextMenu({ x: e.clientX, y: e.clientY, entry })
+  }, [])
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), [])
+
+  const buildContextItems = useCallback(
+    (entry: DirEntry): ContextMenuItem[] => {
+      const items: ContextMenuItem[] = []
+
+      if (!entry.isDirectory) {
+        items.push({
+          label: 'Abrir',
+          action: () => requestOpenFile(entry.path),
+        })
+        items.push({ label: '', action: () => {}, separator: true })
+      }
+
+      if (entry.isDirectory) {
+        items.push({
+          label: 'Nuevo archivo',
+          action: () => {
+            // Expandir la carpeta y crear dentro
+            handleToggle(entry.path, true).then(() => {
+              setCreatingIn({ parentPath: entry.path, type: 'file' })
+            })
+          },
+        })
+        items.push({
+          label: 'Nueva carpeta',
+          action: () => {
+            handleToggle(entry.path, true).then(() => {
+              setCreatingIn({ parentPath: entry.path, type: 'folder' })
+            })
+          },
+        })
+        items.push({ label: '', action: () => {}, separator: true })
+      }
+
+      items.push({
+        label: 'Renombrar',
+        action: () => setRenamingPath(entry.path),
+      })
+
+      items.push({
+        label: 'Copiar ruta',
+        action: () => window.cristalAPI.copyPath(entry.path),
+      })
+
+      items.push({ label: '', action: () => {}, separator: true })
+
+      items.push({
+        label: 'Revelar en el Explorador',
+        action: () => window.cristalAPI.revealInExplorer(entry.path),
+      })
+
+      items.push({ label: '', action: () => {}, separator: true })
+
+      items.push({
+        label: 'Eliminar',
+        danger: true,
+        action: async () => {
+          try {
+            await window.cristalAPI.deletePath(entry.path)
+            await refreshDir(parentDir(entry.path))
+          } catch {
+            /* ignore */
+          }
+        },
+      })
+
+      return items
+    },
+    [requestOpenFile, handleToggle, refreshDir],
+  )
+
+  /* ── Rename ── */
+
+  const handleRenameConfirm = useCallback(
+    async (oldPath: string, newName: string) => {
+      setRenamingPath(null)
+      try {
+        await window.cristalAPI.renamePath(oldPath, newName)
+        await refreshDir(parentDir(oldPath))
+      } catch {
+        /* ignore */
+      }
+    },
+    [refreshDir],
+  )
+
+  const handleRenameCancel = useCallback(() => setRenamingPath(null), [])
+
+  /* ── Drag & Drop (move) ── */
+
+  const handleDrop = useCallback(
+    async (sourcePath: string, destDir: string) => {
+      // Evitar mover a sí mismo o su padre actual
+      if (parentDir(sourcePath) === destDir) return
+      try {
+        await window.cristalAPI.movePath(sourcePath, destDir)
+        // Refrescar carpetas afectadas
+        await refreshDir(parentDir(sourcePath))
+        await refreshDir(destDir)
+      } catch {
+        /* ignore */
+      }
+    },
+    [refreshDir],
+  )
+
+  /* ── Drop on root area (tree blank space) ── */
+
+  const handleRootDragOver = (e: React.DragEvent) => {
+    if (!state.rootPath) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleRootDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (!state.rootPath) return
+    const sourcePath = e.dataTransfer.getData(DRAG_MIME)
+    if (sourcePath) {
+      handleDrop(sourcePath, state.rootPath)
+    }
+  }
+
+  /* ── Root context menu ── */
+
+  const handleRootContext = useCallback(
+    (e: React.MouseEvent) => {
+      if (!state.rootPath) return
+      e.preventDefault()
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        entry: { name: state.rootName, path: state.rootPath, isDirectory: true },
+      })
+    },
+    [state.rootPath, state.rootName],
+  )
 
   return (
     <div
@@ -366,7 +701,6 @@ export default function Sidebar() {
       </div>
 
       {!state.rootPath ? (
-        /* Sin carpeta abierta */
         <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
           <Folder size={32} weight="light" style={{ color: 'var(--cristal-text-faint)', marginBottom: 8 }} />
           <span className="text-[11px]" style={{ color: 'var(--cristal-text-faint)' }}>
@@ -392,7 +726,6 @@ export default function Sidebar() {
               <span className="truncate">{state.rootName.toUpperCase()}</span>
             </div>
 
-            {/* Action buttons — visible on hover */}
             <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/header:opacity-100">
               <ToolbarButton icon={FilePlus} title="Nuevo archivo" onClick={handleNewFile} />
               <ToolbarButton icon={FolderPlus} title="Nueva carpeta" onClick={handleNewFolder} />
@@ -403,21 +736,28 @@ export default function Sidebar() {
 
           {/* Árbol de archivos real */}
           {!rootCollapsed && (
-            <div className="flex-1 overflow-y-auto py-1">
+            <div
+              className="flex-1 overflow-y-auto py-1"
+              onContextMenu={handleRootContext}
+              onDragOver={handleRootDragOver}
+              onDrop={handleRootDrop}
+            >
               {/* Inline creation at root level */}
               {creatingIn?.parentPath === state.rootPath && (
                 <div style={{ paddingLeft: '12px' }}>
                   <InlineInput
                     type={creatingIn.type}
                     onConfirm={async (name) => {
-                      const newPath = state.rootPath + (state.rootPath!.endsWith('/') || state.rootPath!.endsWith('\\') ? '' : '/') + name
+                      const newPath = childPath(state.rootPath!, name)
                       try {
                         if (creatingIn.type === 'folder') {
                           await window.cristalAPI.createDirectory(newPath)
                         } else {
                           await window.cristalAPI.createFile(newPath)
                         }
-                      } catch { /* ignore */ }
+                      } catch {
+                        /* ignore */
+                      }
                       handleCreationDone()
                     }}
                     onCancel={() => setCreatingIn(null)}
@@ -436,11 +776,27 @@ export default function Sidebar() {
                   onFileClick={handleFileClick}
                   creatingIn={creatingIn}
                   onCreationDone={handleCreationDone}
+                  renamingPath={renamingPath}
+                  onRenameConfirm={handleRenameConfirm}
+                  onRenameCancel={handleRenameCancel}
+                  onContextMenu={handleContextMenu}
+                  onDrop={handleDrop}
+                  selectedPath={selectedPath}
                 />
               ))}
             </div>
           )}
         </>
+      )}
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          items={buildContextItems(contextMenu.entry)}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={closeContextMenu}
+        />
       )}
     </div>
   )
