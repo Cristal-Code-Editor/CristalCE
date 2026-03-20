@@ -35,13 +35,11 @@ export default function MainLayout() {
             <Sidebar />
           </Panel>
 
-          {/* Separator — línea fina con hover cian cristalino */}
+          {/* Separator — línea con zona de agarre amplia y hover cian */}
           <Separator
-            className="group relative w-px transition-colors duration-150"
+            className="group relative w-[3px] cursor-col-resize transition-colors duration-150 hover:bg-[var(--cristal-accent)] data-[resize-handle-active]:bg-[var(--cristal-accent)]"
             style={{ backgroundColor: 'var(--cristal-border)' }}
-          >
-            <div className="absolute inset-y-0 -left-[2px] w-[5px] cursor-col-resize group-hover:bg-[var(--cristal-accent)] group-data-[resize-handle-active]:bg-[var(--cristal-accent)]" />
-          </Separator>
+          />
 
           <Panel order={2}>
             <EditorArea />
