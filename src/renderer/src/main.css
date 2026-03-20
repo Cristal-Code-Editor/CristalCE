@@ -9,7 +9,7 @@
   /* Fondos — charcoal cálido con capas de profundidad */
   --cristal-bg-activitybar: #1c1c1e;
   --cristal-bg-sidebar: #202022;
-  --cristal-bg-editor: #28282a;
+  --cristal-bg-editor: #1e1e1e;
   --cristal-bg-statusbar: #1c1c1e;
   --cristal-bg-header: #1c1c1e;
   --cristal-bg-hover: #2c2c2e;
@@ -65,4 +65,13 @@ body {
 .cristal-resize-handle:hover,
 .cristal-resize-handle[data-resize-handle-active] {
   background-color: var(--cristal-accent);
+}
+
+/* Tab bar — hide scrollbar but allow horizontal scroll */
+.cristal-tabs {
+  scrollbar-width: none; /* Firefox */
+}
+
+.cristal-tabs::-webkit-scrollbar {
+  display: none; /* Chrome / Edge / Safari */
 }
