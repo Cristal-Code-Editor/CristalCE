@@ -134,16 +134,56 @@ function Tab({
 
 /* ── Welcome ───────────────────────────────────────────── */
 
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd
+      className="inline-flex min-w-[22px] items-center justify-center rounded-[4px] border px-[6px] py-[1px] text-[11px] font-medium"
+      style={{
+        backgroundColor: 'rgba(255,255,255,0.04)',
+        borderColor: 'rgba(255,255,255,0.10)',
+        color: 'var(--cristal-text-muted)',
+      }}
+    >
+      {children}
+    </kbd>
+  )
+}
+
+function ShortcutRow({ label, keys }: { label: string; keys: string[] }) {
+  return (
+    <div className="flex items-center justify-between gap-8">
+      <span className="text-[13px]" style={{ color: 'var(--cristal-text-muted)' }}>
+        {label}
+      </span>
+      <span className="flex items-center gap-[3px]">
+        {keys.map((key, i) => (
+          <span key={i} className="flex items-center gap-[3px]">
+            {i > 0 && (
+              <span className="text-[10px]" style={{ color: 'var(--cristal-text-faint)' }}>
+                +
+              </span>
+            )}
+            <Kbd>{key}</Kbd>
+          </span>
+        ))}
+      </span>
+    </div>
+  )
+}
+
 function WelcomeScreen() {
   return (
     <div
       className="flex h-full w-full flex-col items-center justify-center select-none"
       style={{ backgroundColor: '#1e1e1e' }}
     >
-      <DiamondsFour size={48} weight="duotone" style={{ color: '#555', marginBottom: 16 }} />
-      <span className="text-sm" style={{ color: '#555' }}>
-        Abrí un archivo para comenzar
-      </span>
+      <DiamondsFour size={72} weight="duotone" style={{ color: '#333', marginBottom: 32 }} />
+
+      <div className="flex flex-col gap-[10px]">
+        <ShortcutRow label="Nuevo archivo" keys={['Ctrl', 'N']} />
+        <ShortcutRow label="Abrir archivo" keys={['Ctrl', 'O']} />
+        <ShortcutRow label="Abrir carpeta" keys={['Ctrl', 'Shift', 'O']} />
+      </div>
     </div>
   )
 }
