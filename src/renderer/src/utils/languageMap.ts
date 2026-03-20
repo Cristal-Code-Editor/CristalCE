@@ -93,6 +93,55 @@ export function detectLanguage(fileName: string): string {
 }
 
 /**
+ * Mapeo inverso: Monaco language ID → extensión sugerida para "Guardar como".
+ * Retorna la extensión más representativa del lenguaje (sin punto).
+ */
+const LANGUAGE_TO_EXT: Record<string, string> = {
+  typescript: 'ts',
+  typescriptreact: 'tsx',
+  javascript: 'js',
+  javascriptreact: 'jsx',
+  html: 'html',
+  css: 'css',
+  scss: 'scss',
+  less: 'less',
+  json: 'json',
+  xml: 'xml',
+  yaml: 'yaml',
+  markdown: 'md',
+  python: 'py',
+  rust: 'rs',
+  go: 'go',
+  java: 'java',
+  kotlin: 'kt',
+  c: 'c',
+  cpp: 'cpp',
+  csharp: 'cs',
+  ruby: 'rb',
+  php: 'php',
+  swift: 'swift',
+  lua: 'lua',
+  r: 'r',
+  sql: 'sql',
+  shell: 'sh',
+  powershell: 'ps1',
+  bat: 'bat',
+  dockerfile: 'dockerfile',
+  ini: 'ini',
+  graphql: 'graphql',
+  protobuf: 'proto',
+  plaintext: 'txt',
+}
+
+/**
+ * Retorna la extensión sugerida (sin punto) para un Monaco language ID.
+ * Usado para construir el nombre por defecto en el diálogo "Guardar como".
+ */
+export function languageToExtension(language: string): string {
+  return LANGUAGE_TO_EXT[language] ?? 'txt'
+}
+
+/**
  * Extrae el nombre de archivo de una ruta completa.
  * Maneja separadores / y \ (Windows).
  */
