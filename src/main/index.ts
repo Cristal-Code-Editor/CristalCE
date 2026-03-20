@@ -250,16 +250,48 @@ ipcMain.handle(
   IPC_CHANNELS.FS_SAVE_DIALOG,
   async (_event, defaultPath?: string): Promise<string | null> => {
     if (!mainWindow) return null
+
+    // Detectar extensión del archivo sugerido para priorizar el filtro correcto
+    const ext = defaultPath?.split('.').pop()?.toLowerCase() ?? ''
+
+    // Filtros completos — el orden se reordena según la extensión detectada
+    const allFilters: Array<{ name: string; extensions: string[] }> = [
+      { name: 'TypeScript', extensions: ['ts', 'mts', 'cts'] },
+      { name: 'TypeScript React', extensions: ['tsx'] },
+      { name: 'JavaScript', extensions: ['js', 'mjs', 'cjs'] },
+      { name: 'JavaScript React', extensions: ['jsx'] },
+      { name: 'JSON', extensions: ['json', 'jsonc'] },
+      { name: 'HTML', extensions: ['html', 'htm'] },
+      { name: 'CSS', extensions: ['css'] },
+      { name: 'SCSS', extensions: ['scss'] },
+      { name: 'Less', extensions: ['less'] },
+      { name: 'Python', extensions: ['py'] },
+      { name: 'Rust', extensions: ['rs'] },
+      { name: 'Go', extensions: ['go'] },
+      { name: 'Java', extensions: ['java'] },
+      { name: 'C / C++', extensions: ['c', 'h', 'cpp', 'hpp'] },
+      { name: 'C#', extensions: ['cs'] },
+      { name: 'Ruby', extensions: ['rb'] },
+      { name: 'PHP', extensions: ['php'] },
+      { name: 'Shell', extensions: ['sh', 'bash'] },
+      { name: 'PowerShell', extensions: ['ps1'] },
+      { name: 'SQL', extensions: ['sql'] },
+      { name: 'Markdown', extensions: ['md', 'mdx'] },
+      { name: 'YAML', extensions: ['yaml', 'yml'] },
+      { name: 'XML', extensions: ['xml'] },
+      { name: 'Texto plano', extensions: ['txt'] },
+    ]
+
+    // Mover el filtro que coincida con la extensión al inicio
+    const matchIdx = allFilters.findIndex((f) => f.extensions.includes(ext))
+    const ordered =
+      matchIdx > 0
+        ? [allFilters[matchIdx], ...allFilters.slice(0, matchIdx), ...allFilters.slice(matchIdx + 1)]
+        : allFilters
+
     const result = await dialog.showSaveDialog(mainWindow, {
       defaultPath,
-      filters: [
-        { name: 'Todos los archivos', extensions: ['*'] },
-        { name: 'TypeScript', extensions: ['ts', 'tsx'] },
-        { name: 'JavaScript', extensions: ['js', 'jsx'] },
-        { name: 'JSON', extensions: ['json'] },
-        { name: 'HTML', extensions: ['html', 'htm'] },
-        { name: 'CSS', extensions: ['css'] },
-      ],
+      filters: [...ordered, { name: 'Todos los archivos', extensions: ['*'] }],
     })
     return result.canceled ? null : result.filePath ?? null
   },
