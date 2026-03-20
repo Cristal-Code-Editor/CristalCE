@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, dialog, shell, type MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, dialog, shell, type MenuItemConstructorOptions } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { IPC_CHANNELS } from './ipcChannels'
@@ -175,6 +175,24 @@ function buildMenuTemplate(window: BrowserWindow): MenuItemConstructorOptions[] 
 }
 
 // ─── Ciclo de vida de Electron ────────────────────────────────────────────────
+
+// ─── IPC: Controles de Ventana ──────────────────────────────────────────────
+
+ipcMain.on('window-minimize', () => {
+  mainWindow?.minimize()
+})
+
+ipcMain.on('window-maximize', () => {
+  if (mainWindow?.isMaximized()) {
+    mainWindow.unmaximize()
+  } else {
+    mainWindow?.maximize()
+  }
+})
+
+ipcMain.on('window-close', () => {
+  mainWindow?.close()
+})
 
 app.whenReady().then(() => {
   createWindow()
