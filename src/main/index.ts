@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, Menu, dialog, shell, type MenuItemConstructorOptions } from 'electron'
 import { join } from 'path'
-import { readFile, writeFile, readdir, stat } from 'fs/promises'
+import { readFile, writeFile, readdir, mkdir } from 'fs/promises'
 import { is } from '@electron-toolkit/utils'
 import { IPC_CHANNELS } from './ipcChannels'
 
@@ -243,6 +243,20 @@ ipcMain.handle(
       return a.name.localeCompare(b.name)
     })
     return result
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_CREATE_FILE,
+  async (_event, filePath: string): Promise<void> => {
+    await writeFile(filePath, '', 'utf-8')
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_CREATE_DIRECTORY,
+  async (_event, dirPath: string): Promise<void> => {
+    await mkdir(dirPath, { recursive: true })
   },
 )
 
