@@ -25,32 +25,18 @@ export default function MainLayout() {
         <div className="w-px shrink-0" style={{ backgroundColor: 'var(--cristal-border-subtle)' }} />
 
         {/* Group horizontal: Sidebar redimensionable + Editor */}
-        <Group direction="horizontal" autoSaveId="cristal-layout-v2">
+        <Group direction="horizontal">
           <Panel
-            defaultSize={22}
-            minSize={14}
-            maxSize={45}
+            defaultSize={25}
+            minSize={15}
+            maxSize={50}
             order={1}
           >
             <Sidebar />
           </Panel>
 
           {/* Separator — franja visible y arrastrable con hover cian */}
-          <Separator
-            style={{
-              width: 4,
-              cursor: 'col-resize',
-              backgroundColor: 'var(--cristal-border)',
-              transition: 'background-color 0.15s',
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
-              e.currentTarget.style.backgroundColor = 'var(--cristal-accent)'
-            }}
-            onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
-              e.currentTarget.style.backgroundColor = 'var(--cristal-border)'
-            }}
-          />
+          <Separator className="cristal-resize-handle" />
 
           <Panel order={2}>
             <EditorArea />
