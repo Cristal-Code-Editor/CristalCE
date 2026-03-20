@@ -1,78 +1,210 @@
-import { X, FileTs } from '@phosphor-icons/react'
+import { useRef, useEffect, useCallback, type MouseEvent } from 'react'
+import { X, Circle, FileTs, FileJs, FileCss, FileHtml, DiamondsFour } from '@phosphor-icons/react'
+import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import CodeEditor from './CodeEditor'
 
-interface EditorPaneProps {
+/* ── Types ─────────────────────────────────────────────── */
+
+export interface TabData {
+  id: string
   fileName: string
   language: string
   content: string
-  onContentChange: (value: string) => void
-  onClose: () => void
+  savedContent: string
 }
 
-/**
- * Panel principal del editor — pestaña superior + buffer Monaco.
- * Componente modular que encapsula la lógica de una pestaña individual
- * y delega el renderizado del texto a CodeEditor.
- */
-export default function EditorPane({
-  fileName,
-  language,
-  content,
-  onContentChange,
+interface EditorPaneProps {
+  tabs: TabData[]
+  activeTabId: string | null
+  onTabSelect: (id: string) => void
+  onTabClose: (id: string) => void
+  onContentChange: (id: string, content: string) => void
+  onSave: (id: string) => void
+}
+
+/* ── File icon lookup ──────────────────────────────────── */
+
+const ICON_MAP: Record<string, { Icon: PhosphorIcon; color: string }> = {
+  ts: { Icon: FileTs, color: '#3178c6' },
+  tsx: { Icon: FileTs, color: '#3178c6' },
+  js: { Icon: FileJs, color: '#f0db4f' },
+  jsx: { Icon: FileJs, color: '#f0db4f' },
+  css: { Icon: FileCss, color: '#563d7c' },
+  html: { Icon: FileHtml, color: '#e44d26' },
+}
+
+function fileIcon(name: string) {
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
+  return ICON_MAP[ext] ?? { Icon: FileTs, color: '#858585' }
+}
+
+/* ── Single Tab ────────────────────────────────────────── */
+
+function Tab({
+  tab,
+  isActive,
+  isModified,
+  onSelect,
   onClose,
-}: EditorPaneProps) {
+}: {
+  tab: TabData
+  isActive: boolean
+  isModified: boolean
+  onSelect: () => void
+  onClose: () => void
+}) {
+  const { Icon, color } = fileIcon(tab.fileName)
+
+  const onMiddleClick = useCallback(
+    (e: MouseEvent) => {
+      if (e.button === 1) {
+        e.preventDefault()
+        onClose()
+      }
+    },
+    [onClose],
+  )
+
+  const onCloseClick = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation()
+      onClose()
+    },
+    [onClose],
+  )
+
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden">
-      {/* Barra de pestaña */}
-      <div
-        className="flex shrink-0 items-center gap-2 border-b px-3"
+    <div
+      role="tab"
+      aria-selected={isActive}
+      onClick={onSelect}
+      onMouseDown={onMiddleClick}
+      className="group flex h-full shrink-0 cursor-pointer items-center gap-1.5 px-3"
+      style={{
+        backgroundColor: isActive ? '#1e1e1e' : '#2d2d2d',
+        borderRight: '1px solid #191919',
+        borderTop: isActive ? '1px solid #007acc' : '1px solid transparent',
+      }}
+    >
+      <Icon size={15} weight="duotone" style={{ color, flexShrink: 0 }} />
+
+      <span
+        className="select-none truncate text-xs"
         style={{
-          height: 36,
-          backgroundColor: 'var(--cristal-bg-sidebar)',
-          borderColor: 'var(--cristal-border)',
+          color: isActive ? '#fff' : '#969696',
+          maxWidth: 140,
         }}
       >
-        <FileTs
-          size={16}
-          weight="regular"
-          style={{ color: 'var(--cristal-accent)', flexShrink: 0 }}
-        />
-        <span
-          className="truncate text-xs font-medium"
-          style={{ color: 'var(--cristal-text-normal)' }}
-        >
-          {fileName}
-        </span>
-        <button
-          type="button"
-          onClick={onClose}
-          className="ml-auto flex items-center justify-center rounded"
-          style={{
-            width: 20,
-            height: 20,
-            color: 'var(--cristal-text-muted)',
-            flexShrink: 0,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--cristal-bg-hover)'
-            e.currentTarget.style.color = 'var(--cristal-text-normal)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent'
-            e.currentTarget.style.color = 'var(--cristal-text-muted)'
-          }}
-        >
-          <X size={14} weight="bold" />
-        </button>
+        {tab.fileName}
+      </span>
+
+      {/* Close / modified indicator */}
+      <button
+        type="button"
+        onClick={onCloseClick}
+        className={`ml-1 flex items-center justify-center rounded ${
+          isModified || isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}
+        style={{
+          width: 20,
+          height: 20,
+          flexShrink: 0,
+          color: '#969696',
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = '#424242')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+      >
+        {isModified ? <Circle size={9} weight="fill" /> : <X size={14} />}
+      </button>
+    </div>
+  )
+}
+
+/* ── Welcome ───────────────────────────────────────────── */
+
+function WelcomeScreen() {
+  return (
+    <div
+      className="flex h-full w-full flex-col items-center justify-center select-none"
+      style={{ backgroundColor: '#1e1e1e' }}
+    >
+      <DiamondsFour size={48} weight="duotone" style={{ color: '#555', marginBottom: 16 }} />
+      <span className="text-sm" style={{ color: '#555' }}>
+        Abrí un archivo para comenzar
+      </span>
+    </div>
+  )
+}
+
+/* ── Main ──────────────────────────────────────────────── */
+
+export default function EditorPane({
+  tabs,
+  activeTabId,
+  onTabSelect,
+  onTabClose,
+  onContentChange,
+  onSave,
+}: EditorPaneProps) {
+  const tabBarRef = useRef<HTMLDivElement>(null)
+  const activeTab = tabs.find((t) => t.id === activeTabId)
+
+  // Scroll active tab into view
+  useEffect(() => {
+    if (!tabBarRef.current || !activeTabId) return
+    const el = tabBarRef.current.querySelector<HTMLElement>(`[aria-selected="true"]`)
+    el?.scrollIntoView({ behavior: 'smooth', inline: 'nearest' })
+  }, [activeTabId])
+
+  // Horizontal scroll with mouse wheel on tab bar
+  useEffect(() => {
+    const el = tabBarRef.current
+    if (!el) return
+    const handler = (e: WheelEvent): void => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        el.scrollLeft += e.deltaY
+        e.preventDefault()
+      }
+    }
+    el.addEventListener('wheel', handler, { passive: false })
+    return () => el.removeEventListener('wheel', handler)
+  }, [])
+
+  if (tabs.length === 0) return <WelcomeScreen />
+
+  return (
+    <div className="flex h-full w-full flex-col overflow-hidden" style={{ backgroundColor: '#1e1e1e' }}>
+      {/* Tab bar */}
+      <div
+        ref={tabBarRef}
+        className="cristal-tabs flex shrink-0 items-stretch overflow-x-auto"
+        style={{ height: 35, backgroundColor: '#252526' }}
+        role="tablist"
+      >
+        {tabs.map((tab) => (
+          <Tab
+            key={tab.id}
+            tab={tab}
+            isActive={tab.id === activeTabId}
+            isModified={tab.content !== tab.savedContent}
+            onSelect={() => onTabSelect(tab.id)}
+            onClose={() => onTabClose(tab.id)}
+          />
+        ))}
       </div>
 
-      {/* Buffer del editor — Monaco ocupa todo el espacio restante */}
+      {/* Editor area */}
       <div className="relative min-h-0 flex-1">
-        <CodeEditor
-          language={language}
-          content={content}
-          onContentChange={onContentChange}
-        />
+        {activeTab && (
+          <CodeEditor
+            key={activeTab.id}
+            language={activeTab.language}
+            defaultValue={activeTab.content}
+            onChange={(v) => onContentChange(activeTab.id, v)}
+            onSave={() => onSave(activeTab.id)}
+          />
+        )}
       </div>
     </div>
   )
