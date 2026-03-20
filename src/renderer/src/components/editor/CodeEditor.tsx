@@ -80,11 +80,9 @@ function ensureTheme() {
       { token: 'metatag.content.html', foreground: 'ce9178' },
       // JSX/TSX delimitadores: <, >, />
       { token: 'delimiter.html', foreground: '808080' },
-      // Componente JSX en mayúscula (se tokeniza como type.identifier)
+      // Componente JSX/TSX en mayúscula (Monaco los tokeniza con sufijo .ts/.js)
       { token: 'type.identifier.ts', foreground: '4ec9b0' },
       { token: 'type.identifier.js', foreground: '4ec9b0' },
-      { token: 'type.identifier.tsx', foreground: '4ec9b0' },
-      { token: 'type.identifier.jsx', foreground: '4ec9b0' },
 
       // ── Attributes (HTML/JSX) ───────────────────────────
       { token: 'attribute.name', foreground: '9cdcfe' },
