@@ -115,7 +115,7 @@ function buildMenuTemplate(window: BrowserWindow): MenuItemConstructorOptions[] 
         },
         {
           label: 'Open Folder...',
-          accelerator: 'CmdOrCtrl+K CmdOrCtrl+O',
+          accelerator: 'CmdOrCtrl+Shift+O',
           click: async () => {
             // Diálogo nativo del SO para seleccionar carpeta
             const result = await dialog.showOpenDialog(window, {
