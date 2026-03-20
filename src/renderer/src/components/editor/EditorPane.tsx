@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, type MouseEvent } from 'react'
-import { X, Circle, FileTs, FileJs, FileCss, FileHtml, DiamondsFour } from '@phosphor-icons/react'
+import { X, Circle, FileTs, FileJs, FileCss, FileHtml, FileText, FileCode, DiamondsFour } from '@phosphor-icons/react'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import CodeEditor from './CodeEditor'
 
@@ -11,6 +11,8 @@ export interface TabData {
   language: string
   content: string
   savedContent: string
+  /** Ruta absoluta del archivo en disco. null = archivo nuevo sin guardar. */
+  filePath: string | null
 }
 
 interface EditorPaneProps {
@@ -29,13 +31,22 @@ const ICON_MAP: Record<string, { Icon: PhosphorIcon; color: string }> = {
   tsx: { Icon: FileTs, color: '#3178c6' },
   js: { Icon: FileJs, color: '#f0db4f' },
   jsx: { Icon: FileJs, color: '#f0db4f' },
+  mjs: { Icon: FileJs, color: '#f0db4f' },
   css: { Icon: FileCss, color: '#563d7c' },
+  scss: { Icon: FileCss, color: '#cd6799' },
   html: { Icon: FileHtml, color: '#e44d26' },
+  htm: { Icon: FileHtml, color: '#e44d26' },
+  json: { Icon: FileCode, color: '#f0db4f' },
+  md: { Icon: FileText, color: '#519aba' },
+  txt: { Icon: FileText, color: '#858585' },
+  py: { Icon: FileCode, color: '#3572a5' },
+  rs: { Icon: FileCode, color: '#dea584' },
+  go: { Icon: FileCode, color: '#00add8' },
 }
 
 function fileIcon(name: string) {
   const ext = name.split('.').pop()?.toLowerCase() ?? ''
-  return ICON_MAP[ext] ?? { Icon: FileTs, color: '#858585' }
+  return ICON_MAP[ext] ?? { Icon: FileCode, color: '#858585' }
 }
 
 /* ── Single Tab ────────────────────────────────────────── */
