@@ -6,7 +6,6 @@ import { useRef, useEffect, type MutableRefObject } from 'react'
 interface CodeEditorProps {
   language: string
   defaultValue: string
-  aiEnabled: boolean
   onChange: (value: string) => void
   onSave?: () => void
   /** Ref inyectada por el padre para insertar código generado en la posición del cursor. */
@@ -367,15 +366,17 @@ function ensureTheme() {
 
 /* ── Component ─────────────────────────────────────────── */
 
-export default function CodeEditor({ language, defaultValue, aiEnabled, onChange, onSave, onInsertCodeRef }: CodeEditorProps) {
+export default function CodeEditor({ language, defaultValue, onChange, onSave, onInsertCodeRef }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
 
-  // Ref para que el provider inline lea el estado actualizado de aiEnabled
-  const aiEnabledRef = useRef(aiEnabled)
+  // Sincronizar lenguaje al modelo Monaco cuando cambia el prop
   useEffect(() => {
-    aiEnabledRef.current = aiEnabled
-  }, [aiEnabled])
+    if (!editorRef.current) return
+    const model = editorRef.current.getModel()
+    if (!model) return
+    monaco.editor.setModelLanguage(model, language)
+  }, [language])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -447,11 +448,8 @@ export default function CodeEditor({ language, defaultValue, aiEnabled, onChange
     // Se dispara tras 600ms de inactividad para no saturar el backend.
     let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-    const inlineProvider = monaco.languages.registerInlineCompletionsProvider(language, {
+    const inlineProvider = monaco.languages.registerInlineCompletionsProvider('*', {
       provideInlineCompletions: async (model, position, _ctx, cancelToken) => {
-        // Si el autocompletado AI está desactivado, no solicitar
-        if (!aiEnabledRef.current) return { items: [] }
-
         // Texto hasta la posición del cursor (máx ~50 líneas de contexto)
         const textUntilPosition = model.getValueInRange({
           startLineNumber: Math.max(1, position.lineNumber - 50),
