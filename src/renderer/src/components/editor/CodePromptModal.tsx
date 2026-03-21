@@ -18,12 +18,8 @@ export default function CodePromptModal({ language, onClose, onCodeGenerated }: 
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
 
-  // Enfocar textarea al abrir
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+  useEffect(() => { inputRef.current?.focus() }, [])
 
-  // Cerrar con Escape
   useEffect(() => {
     const handler = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape' && !generating) onClose()
@@ -32,7 +28,6 @@ export default function CodePromptModal({ language, onClose, onCodeGenerated }: 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, generating])
 
-  // Cerrar al hacer clic en el backdrop
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent) => {
       if (e.target === backdropRef.current && !generating) onClose()
@@ -48,7 +43,6 @@ export default function CodePromptModal({ language, onClose, onCodeGenerated }: 
     setError(null)
 
     try {
-      // Reutiliza el mismo canal AI con un prompt orientado a generación
       const generationPrompt =
         `// Language: ${language}\n// Task: ${trimmed}\n// Generate the code:\n`
       const result = await window.cristalAPI.requestCompletion(
@@ -60,10 +54,10 @@ export default function CodePromptModal({ language, onClose, onCodeGenerated }: 
         onCodeGenerated(result)
         onClose()
       } else {
-        setError('No se recibió respuesta. Verifica tu conexión a internet.')
+        setError('Sin respuesta — revisa tu conexión.')
       }
     } catch {
-      setError('Error al generar código. Intenta de nuevo.')
+      setError('Error al generar. Intenta de nuevo.')
     } finally {
       setGenerating(false)
     }
@@ -85,103 +79,77 @@ export default function CodePromptModal({ language, onClose, onCodeGenerated }: 
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
-      className="absolute inset-0 z-50 flex items-start justify-center"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        paddingTop: '12%',
-        animation: 'cristal-backdrop-in 0.2s ease-out',
-      }}
+      className="cristal-prompt-backdrop"
     >
-      <div
-        className="cristal-modal flex w-full flex-col overflow-hidden"
-        style={{ maxWidth: 540, animation: 'cristal-modal-in 0.2s cubic-bezier(0.16, 1, 0.3, 1)' }}
-      >
-        {/* Cabecera con línea de acento superior */}
-        <div
-          className="flex items-center gap-2 px-4 py-2.5"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-        >
-          <Sparkle size={14} weight="fill" style={{ color: 'var(--cristal-accent)' }} />
-          <span className="flex-1 text-[12px] font-medium" style={{ color: 'var(--cristal-text-normal)' }}>
-            Generar código
-          </span>
-          <span
-            className="rounded-sm px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider"
-            style={{ backgroundColor: 'var(--cristal-accent-dim)', color: 'var(--cristal-accent)' }}
-          >
-            AI
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
+      <div className="cristal-prompt">
+        {/* Barra de entrada principal */}
+        <div className="cristal-prompt__input-row">
+          <Sparkle size={14} weight="fill" className="cristal-prompt__icon" />
+
+          <textarea
+            ref={inputRef}
+            rows={1}
+            placeholder="Describe qué código necesitas…"
+            value={prompt}
+            onChange={(e) => {
+              setPrompt(e.target.value)
+              // Auto-resize
+              const el = e.target
+              el.style.height = 'auto'
+              el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+            }}
+            onKeyDown={handleKeyDown}
             disabled={generating}
-            className="cristal-icon-btn"
-          >
-            <X size={14} />
-          </button>
-        </div>
+            className="cristal-prompt__textarea"
+          />
 
-        {/* Cuerpo */}
-        <div className="flex flex-col gap-2.5 px-4 py-3">
-          <div className="relative">
-            <textarea
-              ref={inputRef}
-              rows={3}
-              placeholder="Describe qué código necesitas…"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={generating}
-              className="cristal-textarea"
-            />
-          </div>
-
-          {error && (
-            <div
-              className="rounded-md px-2.5 py-1.5 text-[11px]"
-              style={{ backgroundColor: 'rgba(244, 71, 71, 0.1)', color: '#f44747' }}
+          {!generating && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="cristal-prompt__close"
             >
-              {error}
-            </div>
-          )}
-
-          {/* Indicador de generación */}
-          {generating && (
-            <div className="flex items-center gap-2 py-0.5 text-[11px]" style={{ color: 'var(--cristal-accent)' }}>
-              <CircleNotch size={13} className="cristal-spin" />
-              <span>Generando…</span>
-              <div className="ml-auto flex gap-[3px]">
-                <span className="cristal-pulse-dot" style={{ animationDelay: '0ms' }} />
-                <span className="cristal-pulse-dot" style={{ animationDelay: '150ms' }} />
-                <span className="cristal-pulse-dot" style={{ animationDelay: '300ms' }} />
-              </div>
-            </div>
+              <X size={13} weight="bold" />
+            </button>
           )}
         </div>
 
-        {/* Footer */}
-        <div
-          className="flex items-center justify-between px-4 py-2.5"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
-        >
-          <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--cristal-text-faint)' }}>
-            <kbd className="cristal-kbd">Ctrl</kbd>
-            <span>+</span>
-            <kbd className="cristal-kbd">Enter</kbd>
+        {/* Estado de generación */}
+        {generating && (
+          <div className="cristal-prompt__status">
+            <CircleNotch size={12} className="cristal-spin" />
+            <span>Generando código…</span>
+            <div className="cristal-prompt__dots">
+              <span style={{ animationDelay: '0ms' }} />
+              <span style={{ animationDelay: '150ms' }} />
+              <span style={{ animationDelay: '300ms' }} />
+            </div>
           </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="cristal-prompt__error">{error}</div>
+        )}
+
+        {/* Barra de acciones */}
+        <div className="cristal-prompt__actions">
+          <span className="cristal-prompt__hint">
+            <kbd>Ctrl</kbd><span>+</span><kbd>Enter</kbd>
+          </span>
 
           <button
             type="button"
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className={`cristal-btn-primary ${canSubmit ? '' : 'cristal-btn-primary--disabled'}`}
+            className={`cristal-prompt__submit ${canSubmit ? '' : 'cristal-prompt__submit--disabled'}`}
           >
             {generating ? (
-              <CircleNotch size={12} className="cristal-spin" />
+              <CircleNotch size={11} className="cristal-spin" />
             ) : (
-              <PaperPlaneRight size={12} weight="bold" />
+              <PaperPlaneRight size={11} weight="fill" />
             )}
-            <span>{generating ? 'Generando…' : 'Generar'}</span>
+            <span>Generar</span>
           </button>
         </div>
       </div>
