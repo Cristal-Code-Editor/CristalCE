@@ -17,6 +17,7 @@ import { useWorkspace } from '../../context/WorkspaceContext'
 export default function MainLayout() {
   const [hasEditor, setHasEditor] = useState(false)
   const [showTerminal, setShowTerminal] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
   const handleHasEditor = useCallback((v: boolean) => setHasEditor(v), [])
   const { state } = useWorkspace()
 
@@ -27,6 +28,12 @@ export default function MainLayout() {
     activeFilePathRef.current = fp
   }, [])
 
+  // Toast temporal — se oculta automáticamente
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }, [])
+
   // Escuchar acciones de menú del Terminal
   useEffect(() => {
     const unsub = window.cristalAPI.onMenuAction((action) => {
@@ -34,21 +41,32 @@ export default function MainLayout() {
         setShowTerminal(true)
       } else if (action === 'TERMINAL_RUN_FILE') {
         const fp = activeFilePathRef.current
-        if (!fp) return
+        if (!fp) {
+          showToast('No hay archivo activo para ejecutar')
+          return
+        }
         setShowTerminal(true)
-        // Pequeño delay para que el panel se monte si no estaba visible
         requestAnimationFrame(() => {
           terminalRef.current?.writeToActive(`node "${fp}"\r`)
         })
       } else if (action === 'TERMINAL_RUN_SELECTION') {
-        // Obtener texto seleccionado del editor Monaco activo
         const editors = monaco.editor.getEditors()
         const focused = editors.find((e) => e.hasTextFocus()) ?? editors[0]
-        const selection = focused?.getSelection()
-        const model = focused?.getModel()
-        if (!selection || !model) return
+        if (!focused) {
+          showToast('No hay editor abierto')
+          return
+        }
+        const selection = focused.getSelection()
+        const model = focused.getModel()
+        if (!selection || !model) {
+          showToast('No hay texto seleccionado')
+          return
+        }
         const text = model.getValueInRange(selection)
-        if (!text.trim()) return
+        if (!text.trim()) {
+          showToast('No hay texto seleccionado')
+          return
+        }
         setShowTerminal(true)
         requestAnimationFrame(() => {
           terminalRef.current?.writeToActive(text + '\r')
@@ -56,7 +74,7 @@ export default function MainLayout() {
       }
     })
     return unsub
-  }, [])
+  }, [showToast])
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden">
@@ -88,14 +106,14 @@ export default function MainLayout() {
           <Panel order={2}>
             {/* Group vertical: Editor arriba, Terminal abajo */}
             <Group direction="vertical">
-              <Panel order={1} minSize="20%">
+              <Panel id="editor-main" order={1} minSize="20%">
                 <EditorArea onHasEditor={handleHasEditor} onActiveFileChange={handleActiveFileChange} />
               </Panel>
 
               {showTerminal && (
                 <>
                   <Separator className="cristal-resize-handle cristal-resize-handle--horizontal" />
-                  <Panel order={2} defaultSize="35%" minSize="10%" maxSize="80%">
+                  <Panel id="terminal-main" order={2} defaultSize="35%" minSize="10%" maxSize="80%">
                     <TerminalPanel
                       ref={terminalRef}
                       cwd={state.rootPath ?? undefined}
@@ -111,6 +129,11 @@ export default function MainLayout() {
 
       {/* StatusBar — solo visible cuando hay editor activo */}
       {hasEditor && <StatusBar />}
+
+      {/* Toast de advertencia */}
+      {toast && (
+        <div className="cristal-toast">{toast}</div>
+      )}
     </div>
   )
 }
