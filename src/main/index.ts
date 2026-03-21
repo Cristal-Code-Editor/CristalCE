@@ -726,6 +726,20 @@ ipcMain.handle(IPC_CHANNELS.TERMINAL_DESTROY, async (_event, id: string) => {
   destroyTerminal(id)
 })
 
+ipcMain.handle(IPC_CHANNELS.TERMINAL_SELECT_SHELL, async (): Promise<string | null> => {
+  if (!mainWindow) return null
+  const { dialog } = await import('electron')
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Seleccionar ejecutable de shell',
+    properties: ['openFile'],
+    filters: process.platform === 'win32'
+      ? [{ name: 'Ejecutables', extensions: ['exe', 'cmd', 'bat'] }, { name: 'Todos', extensions: ['*'] }]
+      : [{ name: 'Todos', extensions: ['*'] }],
+  })
+  if (result.canceled || result.filePaths.length === 0) return null
+  return result.filePaths[0]
+})
+
 app.whenReady().then(() => {
   createWindow()
 
