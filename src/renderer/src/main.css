@@ -275,7 +275,7 @@ body {
    ═══════════════════════════════════════════════════════════ */
 
 .cristal-prompt-backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 50;
   display: flex;
@@ -591,29 +591,6 @@ body {
   font-size: 12px;
   color: var(--cristal-text-faint);
   font-style: italic;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   StatusBar — botón runtime Node.js
-   ═══════════════════════════════════════════════════════════ */
-
-.cristal-statusbar__runtime {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 4px;
-  border: none;
-  border-radius: 3px;
-  background: transparent;
-  color: var(--cristal-text-muted);
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-  transition: color 0.12s, background-color 0.12s;
-}
-.cristal-statusbar__runtime:hover {
-  color: var(--cristal-accent);
-  background-color: rgba(0, 229, 255, 0.06);
 }
 
 /* ═══════════════════════════════════════════════════════════
