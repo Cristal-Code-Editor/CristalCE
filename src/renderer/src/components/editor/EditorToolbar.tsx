@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { CaretDown, Sparkle, Check, MagnifyingGlass, Play, Stop } from '@phosphor-icons/react'
+import { CaretDown, Sparkle, Check, MagnifyingGlass, Play, Stop, HardDrives } from '@phosphor-icons/react'
 import { SUPPORTED_LANGUAGES } from '../../utils/languageMap'
+import RuntimeModal from './RuntimeModal'
 
 /* ── Props ─────────────────────────────────────────────── */
 
@@ -149,6 +150,8 @@ export default function EditorToolbar({
   onRun,
   onStop,
 }: EditorToolbarProps) {
+  const [showRuntime, setShowRuntime] = useState(false)
+
   return (
     <div className="cristal-editor-toolbar">
       {/* Selector de lenguaje — lado izquierdo */}
@@ -179,7 +182,16 @@ export default function EditorToolbar({
         <button type="button" onClick={onRequestCode} className="cristal-toolbar__btn cristal-toolbar__btn--gen" title="Generar código con IA">
           <Sparkle size={14} weight="fill" />
         </button>
+
+        <span className="cristal-toolbar__divider" />
+
+        {/* Runtimes */}
+        <button type="button" onClick={() => setShowRuntime(true)} className="cristal-toolbar__btn" title="Configurar runtime de Node.js">
+          <HardDrives size={14} weight="duotone" />
+        </button>
       </div>
+
+      {showRuntime && <RuntimeModal onClose={() => setShowRuntime(false)} />}
     </div>
   )
 }
