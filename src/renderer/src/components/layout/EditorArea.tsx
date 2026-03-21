@@ -152,6 +152,9 @@ export default function EditorArea() {
         case 'FILE_SAVE_AS':
           handleSaveAsActive()
           break
+        case 'FILE_SAVE_ALL':
+          handleSaveAll()
+          break
         case 'FILE_CLOSE_EDITOR':
           if (state.activeTabId) dispatch({ type: 'CLOSE_TAB', id: state.activeTabId })
           break
@@ -185,6 +188,13 @@ export default function EditorArea() {
     const tab = state.tabs.find((t) => t.id === state.activeTabId)
     if (tab) saveTab(tab)
   }, [state.tabs, state.activeTabId, saveTab])
+
+  const handleSaveAll = useCallback(async () => {
+    const modified = state.tabs.filter((t) => t.content !== t.savedContent)
+    for (const tab of modified) {
+      await saveTab(tab)
+    }
+  }, [state.tabs, saveTab])
 
   const handleSaveAsActive = useCallback(async () => {
     const tab = state.tabs.find((t) => t.id === state.activeTabId)
