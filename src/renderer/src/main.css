@@ -75,3 +75,26 @@ body {
 .cristal-tabs::-webkit-scrollbar {
   display: none; /* Chrome / Edge / Safari */
 }
+
+/* Modal de generación de código — entrada suave */
+@keyframes cristal-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Spinner rotatorio para indicadores de carga */
+@keyframes cristal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cristal-spin {
+  animation: cristal-spin 0.8s linear infinite;
+}
