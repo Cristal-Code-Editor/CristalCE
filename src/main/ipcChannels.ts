@@ -84,6 +84,20 @@ export const IPC_CHANNELS = {
   RUNTIME_SET_ACTIVE: 'RUNTIME_SET_ACTIVE',
   /** Main → Renderer: progreso de descarga (0-100) */
   RUNTIME_INSTALL_PROGRESS: 'RUNTIME_INSTALL_PROGRESS',
+
+  // ── Terminal Integrada (invoke/handle + send) ───────────
+  /** Renderer → Main: crear una nueva sesión de terminal */
+  TERMINAL_CREATE: 'TERMINAL_CREATE',
+  /** Renderer → Main: enviar datos de teclado al PTY */
+  TERMINAL_WRITE: 'TERMINAL_WRITE',
+  /** Renderer → Main: redimensionar el PTY (cols, rows) */
+  TERMINAL_RESIZE: 'TERMINAL_RESIZE',
+  /** Renderer → Main: destruir una sesión de terminal */
+  TERMINAL_DESTROY: 'TERMINAL_DESTROY',
+  /** Main → Renderer: datos de salida del PTY */
+  TERMINAL_DATA: 'TERMINAL_DATA',
+  /** Main → Renderer: la sesión PTY terminó (exitCode) */
+  TERMINAL_EXIT: 'TERMINAL_EXIT',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
