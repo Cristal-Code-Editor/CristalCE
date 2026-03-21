@@ -147,7 +147,7 @@ function buildMenuTemplate(window: BrowserWindow): MenuItemConstructorOptions[] 
         },
         {
           label: 'Save All',
-          accelerator: 'CmdOrCtrl+K S',
+          accelerator: 'CmdOrCtrl+Alt+S',
           click: () => {
             // IPC → Renderer: solicita guardar todos los archivos abiertos
             window.webContents.send(IPC_CHANNELS.MENU_ACTION, IPC_CHANNELS.FILE_SAVE_ALL)
