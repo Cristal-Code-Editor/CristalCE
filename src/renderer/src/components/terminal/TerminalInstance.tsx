@@ -28,9 +28,12 @@ export default function TerminalInstance({ sessionId, visible }: TerminalInstanc
     const term = new Terminal({
       fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace",
       fontSize: 13,
-      lineHeight: 1.35,
+      lineHeight: 1.4,
+      letterSpacing: 0.3,
       cursorBlink: true,
       cursorStyle: 'bar',
+      scrollback: 5000,
+      allowProposedApi: true,
       theme: {
         background: '#1a1a1c',
         foreground: '#d4d4d4',
@@ -54,8 +57,6 @@ export default function TerminalInstance({ sessionId, visible }: TerminalInstanc
         brightCyan: '#00e5ff',
         brightWhite: '#ffffff',
       },
-      allowProposedApi: true,
-      scrollback: 5000,
     })
 
     const fit = new FitAddon()
