@@ -421,3 +421,171 @@ body {
   background-color: var(--cristal-accent);
   animation: cristal-pulse-dot 1.2s ease-in-out infinite;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Botón ejecutar / detener  (toolbar)
+   ═══════════════════════════════════════════════════════════ */
+
+.cristal-run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px 2px 7px;
+  border: 1px solid rgba(76, 175, 80, 0.25);
+  border-radius: 12px;
+  background: rgba(76, 175, 80, 0.08);
+  color: #4caf50;
+  font-size: 10.5px;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.cristal-run-btn:hover {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.4);
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.1);
+}
+
+.cristal-run-btn--stop {
+  border-color: rgba(244, 71, 71, 0.25);
+  background: rgba(244, 71, 71, 0.08);
+  color: #f44747;
+}
+.cristal-run-btn--stop:hover {
+  background: rgba(244, 71, 71, 0.15);
+  border-color: rgba(244, 71, 71, 0.4);
+  box-shadow: 0 0 10px rgba(244, 71, 71, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Output panel — terminal de resultados
+   ═══════════════════════════════════════════════════════════ */
+
+.cristal-output {
+  display: flex;
+  flex-direction: column;
+  height: 200px;
+  min-height: 80px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background-color: #1a1a1c;
+}
+
+.cristal-output__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+  padding: 0 8px 0 12px;
+  flex-shrink: 0;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  user-select: none;
+}
+
+.cristal-output__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--cristal-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cristal-output__badge {
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(76, 175, 80, 0.12);
+  color: #4caf50;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  animation: cristal-pulse-dot 1.8s ease-in-out infinite;
+}
+
+.cristal-output__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cristal-output__action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--cristal-text-faint);
+  cursor: pointer;
+  transition: color 0.1s, background-color 0.1s;
+}
+.cristal-output__action-btn:hover {
+  color: var(--cristal-text-muted);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.cristal-output__stop-btn {
+  width: auto;
+  padding: 0 8px;
+  font-size: 10px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #f44747;
+}
+.cristal-output__stop-btn:hover {
+  color: #ff6b6b;
+  background-color: rgba(244, 71, 71, 0.08);
+}
+
+.cristal-output__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+.cristal-output__body::-webkit-scrollbar {
+  width: 4px;
+}
+.cristal-output__body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.cristal-output__line {
+  margin: 0;
+  padding: 0;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--cristal-text-normal);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.cristal-output__line--error {
+  color: #f44747;
+}
+
+.cristal-output__line--info {
+  color: var(--cristal-accent);
+  font-style: italic;
+}
+
+.cristal-output__empty {
+  display: block;
+  padding: 24px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--cristal-text-faint);
+  font-style: italic;
+}
