@@ -1,14 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { CaretDown, Lightning, LightningSlash, Sparkle, Check, MagnifyingGlass } from '@phosphor-icons/react'
+import { CaretDown, Sparkle, Check, MagnifyingGlass } from '@phosphor-icons/react'
 import { SUPPORTED_LANGUAGES } from '../../utils/languageMap'
 
 /* ── Props ─────────────────────────────────────────────── */
 
 interface EditorToolbarProps {
   language: string
-  aiEnabled: boolean
   onLanguageChange: (langId: string) => void
-  onAiToggle: () => void
   onRequestCode: () => void
 }
 
@@ -47,7 +45,6 @@ function LanguageSelector({
   useEffect(() => {
     if (!open) return
     inputRef.current?.focus()
-    // Scroll al lenguaje seleccionado
     requestAnimationFrame(() => {
       listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: 'center' })
     })
@@ -73,14 +70,14 @@ function LanguageSelector({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="cristal-toolbar-btn"
+        className="cristal-lang-btn"
       >
-        <span className="truncate" style={{ maxWidth: 90 }}>{currentLabel}</span>
+        <span>{currentLabel}</span>
         <CaretDown
-          size={9}
+          size={8}
           weight="bold"
           style={{
-            opacity: 0.5,
+            opacity: 0.4,
             transition: 'transform 0.15s',
             transform: open ? 'rotate(180deg)' : 'rotate(0)',
           }}
@@ -88,26 +85,24 @@ function LanguageSelector({
       </button>
 
       {open && (
-        <div className="cristal-dropdown" style={{ width: 220 }}>
-          {/* Campo de búsqueda */}
+        <div className="cristal-dropdown" style={{ width: 200 }}>
           <div className="relative">
             <MagnifyingGlass
-              size={12}
+              size={11}
               weight="bold"
-              className="pointer-events-none absolute top-1/2 left-2 -translate-y-1/2"
+              className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2"
               style={{ color: 'var(--cristal-text-faint)' }}
             />
             <input
               ref={inputRef}
               type="text"
-              placeholder="Buscar lenguaje…"
+              placeholder="Buscar…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="cristal-dropdown-search"
             />
           </div>
 
-          {/* Lista de opciones */}
           <div ref={listRef} className="cristal-dropdown-list">
             {filtered.map((lang) => {
               const isActive = lang.id === language
@@ -123,7 +118,7 @@ function LanguageSelector({
                   }}
                 >
                   <span className="flex-1 truncate text-left">{lang.label}</span>
-                  {isActive && <Check size={12} weight="bold" style={{ color: 'var(--cristal-accent)', flexShrink: 0 }} />}
+                  {isActive && <Check size={11} weight="bold" style={{ color: 'var(--cristal-accent)', flexShrink: 0 }} />}
                 </button>
               )
             })}
@@ -143,38 +138,15 @@ function LanguageSelector({
 
 export default function EditorToolbar({
   language,
-  aiEnabled,
   onLanguageChange,
-  onAiToggle,
   onRequestCode,
 }: EditorToolbarProps) {
   return (
-    <div
-      className="flex shrink-0 items-center justify-end gap-[2px] px-1.5 select-none"
-      style={{
-        height: 32,
-        backgroundColor: 'var(--cristal-bg-editor)',
-        borderBottom: '1px solid var(--cristal-border-subtle)',
-      }}
-    >
+    <div className="cristal-editor-toolbar">
       {/* Generar código */}
-      <button type="button" onClick={onRequestCode} className="cristal-toolbar-btn cristal-toolbar-btn--accent">
-        <Sparkle size={12} weight="fill" />
+      <button type="button" onClick={onRequestCode} className="cristal-gen-btn">
+        <Sparkle size={11} weight="fill" />
         <span>Generar</span>
-      </button>
-
-      {/* Separador sutil */}
-      <div style={{ width: 1, height: 14, backgroundColor: 'var(--cristal-border)', margin: '0 2px', flexShrink: 0 }} />
-
-      {/* Toggle autocompletado AI */}
-      <button
-        type="button"
-        onClick={onAiToggle}
-        title={aiEnabled ? 'Desactivar autocompletado AI' : 'Activar autocompletado AI'}
-        className={`cristal-toolbar-btn ${aiEnabled ? 'cristal-toolbar-btn--active' : ''}`}
-      >
-        {aiEnabled ? <Lightning size={12} weight="fill" /> : <LightningSlash size={12} weight="regular" />}
-        <span>{aiEnabled ? 'AI' : 'AI'}</span>
       </button>
 
       {/* Selector de lenguaje */}
