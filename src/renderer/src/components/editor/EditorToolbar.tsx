@@ -183,12 +183,15 @@ export default function EditorToolbar({
           <Sparkle size={14} weight="fill" />
         </button>
 
-        <span className="cristal-toolbar__divider" />
-
-        {/* Runtimes */}
-        <button type="button" onClick={() => setShowRuntime(true)} className="cristal-toolbar__btn" title="Configurar runtime de Node.js">
-          <HardDrives size={14} weight="duotone" />
-        </button>
+        {/* Runtimes — solo visible para lenguajes que usan Node */}
+        {runnable && (
+          <>
+            <span className="cristal-toolbar__divider" />
+            <button type="button" onClick={() => setShowRuntime(true)} className="cristal-toolbar__btn" title="Configurar runtime de Node.js">
+              <HardDrives size={14} weight="duotone" />
+            </button>
+          </>
+        )}
       </div>
 
       {showRuntime && <RuntimeModal onClose={() => setShowRuntime(false)} />}
