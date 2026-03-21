@@ -74,6 +74,44 @@ const EXT_TO_LANGUAGE: Record<string, string> = {
 }
 
 /**
+ * Lista de lenguajes soportados para el selector de sintaxis.
+ * Cada entrada: { id: Monaco language ID, label: nombre legible }.
+ */
+export const SUPPORTED_LANGUAGES: { id: string; label: string }[] = [
+  { id: 'plaintext', label: 'Plain Text' },
+  { id: 'typescript', label: 'TypeScript' },
+  { id: 'javascript', label: 'JavaScript' },
+  { id: 'html', label: 'HTML' },
+  { id: 'css', label: 'CSS' },
+  { id: 'scss', label: 'SCSS' },
+  { id: 'less', label: 'Less' },
+  { id: 'json', label: 'JSON' },
+  { id: 'xml', label: 'XML' },
+  { id: 'yaml', label: 'YAML' },
+  { id: 'markdown', label: 'Markdown' },
+  { id: 'python', label: 'Python' },
+  { id: 'java', label: 'Java' },
+  { id: 'csharp', label: 'C#' },
+  { id: 'cpp', label: 'C++' },
+  { id: 'c', label: 'C' },
+  { id: 'go', label: 'Go' },
+  { id: 'rust', label: 'Rust' },
+  { id: 'kotlin', label: 'Kotlin' },
+  { id: 'swift', label: 'Swift' },
+  { id: 'ruby', label: 'Ruby' },
+  { id: 'php', label: 'PHP' },
+  { id: 'lua', label: 'Lua' },
+  { id: 'r', label: 'R' },
+  { id: 'sql', label: 'SQL' },
+  { id: 'shell', label: 'Shell' },
+  { id: 'powershell', label: 'PowerShell' },
+  { id: 'bat', label: 'Batch' },
+  { id: 'dockerfile', label: 'Dockerfile' },
+  { id: 'graphql', label: 'GraphQL' },
+  { id: 'ini', label: 'INI / Config' },
+]
+
+/**
  * Detecta el Monaco language ID a partir del nombre de archivo.
  * Maneja archivos especiales (Dockerfile, Makefile) y extensiones compuestas.
  */
