@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
 import Header from './Header'
 import ActivityBar from './ActivityBar'
@@ -11,6 +12,9 @@ import StatusBar from './StatusBar'
  * Paneles redimensionables con persistencia en localStorage.
  */
 export default function MainLayout() {
+  const [hasEditor, setHasEditor] = useState(false)
+  const handleHasEditor = useCallback((v: boolean) => setHasEditor(v), [])
+
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden">
       {/* Header — cabecera personalizada con menú simulado y logo */}
@@ -39,13 +43,13 @@ export default function MainLayout() {
           <Separator className="cristal-resize-handle" />
 
           <Panel order={2}>
-            <EditorArea />
+            <EditorArea onHasEditor={handleHasEditor} />
           </Panel>
         </Group>
       </div>
 
-      {/* StatusBar — barra inferior charcoal */}
-      <StatusBar />
+      {/* StatusBar — solo visible cuando hay editor activo */}
+      {hasEditor && <StatusBar />}
     </div>
   )
 }
