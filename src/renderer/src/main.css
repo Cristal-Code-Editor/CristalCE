@@ -1021,3 +1021,61 @@ body {
   width: 100%;
   cursor: row-resize;
 }
+
+/* ══════════════════════════════════════════════════════════
+   TOAST — notificaciones temporales
+   ══════════════════════════════════════════════════════════ */
+
+.cristal-toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 20px;
+  border-radius: 6px;
+  background-color: #2c2c2e;
+  color: var(--cristal-text-normal);
+  font-size: 12px;
+  border: 1px solid var(--cristal-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  pointer-events: none;
+  animation: cristal-toast-in 0.2s ease;
+}
+
+@keyframes cristal-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   TERMINAL — estado de error
+   ══════════════════════════════════════════════════════════ */
+
+.cristal-terminal__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  color: var(--cristal-text-muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 24px;
+}
+
+.cristal-terminal__error-retry {
+  padding: 4px 12px;
+  border: 1px solid var(--cristal-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--cristal-accent);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.cristal-terminal__error-retry:hover {
+  background-color: var(--cristal-accent-dim);
+}
