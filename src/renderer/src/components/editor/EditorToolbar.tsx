@@ -151,29 +151,35 @@ export default function EditorToolbar({
 }: EditorToolbarProps) {
   return (
     <div className="cristal-editor-toolbar">
-      {/* Botón Ejecutar / Detener */}
-      {runnable && (
-        running ? (
-          <button type="button" onClick={onStop} className="cristal-run-btn cristal-run-btn--stop">
-            <Stop size={11} weight="fill" />
-            <span>Detener</span>
-          </button>
-        ) : (
-          <button type="button" onClick={onRun} className="cristal-run-btn">
-            <Play size={11} weight="fill" />
-            <span>Ejecutar</span>
-          </button>
-        )
-      )}
-
-      {/* Generar código */}
-      <button type="button" onClick={onRequestCode} className="cristal-gen-btn">
-        <Sparkle size={11} weight="fill" />
-        <span>Generar</span>
-      </button>
-
-      {/* Selector de lenguaje */}
+      {/* Selector de lenguaje — lado izquierdo */}
       <LanguageSelector language={language} onSelect={onLanguageChange} />
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Acciones — lado derecho */}
+      <div className="cristal-toolbar__actions">
+        {/* Ejecutar / Detener */}
+        {runnable && (
+          running ? (
+            <button type="button" onClick={onStop} className="cristal-toolbar__btn cristal-toolbar__btn--stop" title="Detener ejecución">
+              <Stop size={14} weight="fill" />
+            </button>
+          ) : (
+            <button type="button" onClick={onRun} className="cristal-toolbar__btn cristal-toolbar__btn--run" title="Ejecutar código">
+              <Play size={14} weight="fill" />
+            </button>
+          )
+        )}
+
+        {/* Separador visual */}
+        {runnable && <span className="cristal-toolbar__divider" />}
+
+        {/* Generar código */}
+        <button type="button" onClick={onRequestCode} className="cristal-toolbar__btn cristal-toolbar__btn--gen" title="Generar código con IA">
+          <Sparkle size={14} weight="fill" />
+        </button>
+      </div>
     </div>
   )
 }
