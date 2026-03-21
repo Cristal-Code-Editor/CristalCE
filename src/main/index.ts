@@ -14,6 +14,14 @@ import {
   setActiveVersion,
   resolveNodeBinary,
 } from './runtimeManager'
+import {
+  createTerminal,
+  writeTerminal,
+  resizeTerminal,
+  destroyTerminal,
+  destroyAllTerminals,
+  type TerminalCreateOpts,
+} from './terminalManager'
 
 /**
  * Referencia global a la ventana principal.
@@ -179,6 +187,51 @@ function buildMenuTemplate(window: BrowserWindow): MenuItemConstructorOptions[] 
           accelerator: 'Alt+F4',
           click: () => {
             app.quit()
+          },
+        },
+      ],
+    },
+    {
+      label: 'Terminal',
+      submenu: [
+        {
+          label: 'New Terminal',
+          accelerator: 'CmdOrCtrl+`',
+          click: () => {
+            window.webContents.send(IPC_CHANNELS.MENU_ACTION, 'TERMINAL_NEW')
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Run Active File',
+          accelerator: 'CmdOrCtrl+Shift+F5',
+          click: () => {
+            window.webContents.send(IPC_CHANNELS.MENU_ACTION, 'TERMINAL_RUN_FILE')
+          },
+        },
+        {
+          label: 'Run Selected Text',
+          click: () => {
+            window.webContents.send(IPC_CHANNELS.MENU_ACTION, 'TERMINAL_RUN_SELECTION')
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Split Terminal',
+          click: () => {
+            window.webContents.send(IPC_CHANNELS.MENU_ACTION, 'TERMINAL_SPLIT')
+          },
+        },
+        {
+          label: 'Close Terminal',
+          click: () => {
+            window.webContents.send(IPC_CHANNELS.MENU_ACTION, 'TERMINAL_CLOSE')
+          },
+        },
+        {
+          label: 'Clear Terminal',
+          click: () => {
+            window.webContents.send(IPC_CHANNELS.MENU_ACTION, 'TERMINAL_CLEAR')
           },
         },
       ],
@@ -646,6 +699,28 @@ ipcMain.handle(IPC_CHANNELS.RUNTIME_SET_ACTIVE, async (_event, version: string) 
   await setActiveVersion(version)
 })
 
+// ─── IPC: Terminal Integrada (node-pty) ──────────────────────────────────────
+
+ipcMain.handle(
+  IPC_CHANNELS.TERMINAL_CREATE,
+  async (_event, opts?: TerminalCreateOpts): Promise<string | null> => {
+    if (!mainWindow) return null
+    return createTerminal(mainWindow, opts ?? {})
+  },
+)
+
+ipcMain.on(IPC_CHANNELS.TERMINAL_WRITE, (_event, id: string, data: string) => {
+  writeTerminal(id, data)
+})
+
+ipcMain.on(IPC_CHANNELS.TERMINAL_RESIZE, (_event, id: string, cols: number, rows: number) => {
+  resizeTerminal(id, cols, rows)
+})
+
+ipcMain.handle(IPC_CHANNELS.TERMINAL_DESTROY, async (_event, id: string) => {
+  destroyTerminal(id)
+})
+
 app.whenReady().then(() => {
   createWindow()
 
@@ -658,6 +733,7 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
+  destroyAllTerminals()
   // En macOS la app permanece activa hasta Cmd+Q explícito
   if (process.platform !== 'darwin') {
     app.quit()
