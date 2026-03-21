@@ -70,6 +70,18 @@ export interface CristalAPI {
   /** Solicita autocompletado de código al proxy AI. */
   requestCompletion: (prompt: string, language: string, context?: string) => Promise<string>
 
+  // ── Code Execution ─────────────────────────────────────
+  /** Ejecuta código en un proceso hijo. */
+  runCode: (code: string, language: string) => Promise<void>
+  /** Detiene el proceso de ejecución activo. */
+  stopCode: () => Promise<void>
+  /** Escucha fragmentos de stdout del proceso. */
+  onCodeStdout: (callback: (data: string) => void) => () => void
+  /** Escucha fragmentos de stderr del proceso. */
+  onCodeStderr: (callback: (data: string) => void) => () => void
+  /** Escucha cuando el proceso termina. */
+  onCodeExit: (callback: (exitCode: number) => void) => () => void
+
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
   /** Alterna maximizar / restaurar la ventana principal. */
@@ -173,6 +185,33 @@ contextBridge.exposeInMainWorld('cristalAPI', {
   // ── AI Completions ────────────────────────────────────
   requestCompletion: (prompt: string, language: string, context?: string): Promise<string> => {
     return ipcRenderer.invoke(IPC_CHANNELS.AI_COMPLETION, { prompt, language, context })
+  },
+
+  // ── Code Execution ────────────────────────────────────
+  runCode: (code: string, language: string): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.RUN_CODE, code, language)
+  },
+
+  stopCode: (): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.STOP_CODE)
+  },
+
+  onCodeStdout: (callback: (data: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: string) => callback(data)
+    ipcRenderer.on(IPC_CHANNELS.CODE_STDOUT, handler)
+    return () => { ipcRenderer.removeListener(IPC_CHANNELS.CODE_STDOUT, handler) }
+  },
+
+  onCodeStderr: (callback: (data: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: string) => callback(data)
+    ipcRenderer.on(IPC_CHANNELS.CODE_STDERR, handler)
+    return () => { ipcRenderer.removeListener(IPC_CHANNELS.CODE_STDERR, handler) }
+  },
+
+  onCodeExit: (callback: (exitCode: number) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, exitCode: number) => callback(exitCode)
+    ipcRenderer.on(IPC_CHANNELS.CODE_EXIT, handler)
+    return () => { ipcRenderer.removeListener(IPC_CHANNELS.CODE_EXIT, handler) }
   },
 
   windowMinimize: () => {
