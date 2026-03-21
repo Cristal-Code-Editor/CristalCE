@@ -4,6 +4,10 @@ import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import CodeEditor from './CodeEditor'
 import EditorToolbar from './EditorToolbar'
 import CodePromptModal from './CodePromptModal'
+import OutputPanel, { type OutputLine } from './OutputPanel'
+
+/** Lenguajes que se pueden ejecutar */
+const RUNNABLE = new Set(['javascript', 'typescript'])
 
 /* ── Types ─────────────────────────────────────────────── */
 
@@ -214,8 +218,40 @@ export default function EditorPane({
   // Estado del modal de generación
   const [showPromptModal, setShowPromptModal] = useState(false)
 
+  // Estado de ejecución de código
+  const [outputLines, setOutputLines] = useState<OutputLine[]>([])
+  const [showOutput, setShowOutput] = useState(false)
+  const [running, setRunning] = useState(false)
+
   // Referencia para insertar código generado en la posición del cursor
   const insertCodeRef = useRef<((code: string) => void) | null>(null)
+
+  // Listeners IPC de ejecución de código
+  useEffect(() => {
+    const unsub1 = window.cristalAPI.onCodeStdout((data) => {
+      setOutputLines((prev) => [...prev, { type: 'stdout', text: data }])
+    })
+    const unsub2 = window.cristalAPI.onCodeStderr((data) => {
+      setOutputLines((prev) => [...prev, { type: 'stderr', text: data }])
+    })
+    const unsub3 = window.cristalAPI.onCodeExit((exitCode) => {
+      setOutputLines((prev) => [...prev, { type: 'info', text: `\nProceso finalizó con código ${exitCode}\n` }])
+      setRunning(false)
+    })
+    return () => { unsub1(); unsub2(); unsub3() }
+  }, [])
+
+  const handleRun = useCallback(() => {
+    if (!activeTab) return
+    setOutputLines([])
+    setShowOutput(true)
+    setRunning(true)
+    window.cristalAPI.runCode(activeTab.content, activeTab.language)
+  }, [activeTab])
+
+  const handleStop = useCallback(() => {
+    window.cristalAPI.stopCode()
+  }, [])
 
   // Scroll active tab into view
   useEffect(() => {
@@ -288,30 +324,48 @@ export default function EditorPane({
       {activeTab && (
         <EditorToolbar
           language={activeTab.language}
+          runnable={RUNNABLE.has(activeTab.language)}
+          running={running}
           onLanguageChange={(lang) => onLanguageChange(activeTab.id, lang)}
           onRequestCode={() => setShowPromptModal(true)}
+          onRun={handleRun}
+          onStop={handleStop}
         />
       )}
 
-      {/* Editor area */}
-      <div className="relative min-h-0 flex-1">
-        {activeTab && (
-          <CodeEditor
-            key={activeTab.id}
-            language={activeTab.language}
-            defaultValue={activeTab.content}
-            onChange={(v) => onContentChange(activeTab.id, v)}
-            onSave={() => onSave(activeTab.id)}
-            onInsertCodeRef={insertCodeRef}
-          />
-        )}
+      {/* Editor + Output split */}
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* Editor area */}
+        <div className="relative min-h-0 flex-1">
+          {activeTab && (
+            <CodeEditor
+              key={activeTab.id}
+              language={activeTab.language}
+              defaultValue={activeTab.content}
+              onChange={(v) => onContentChange(activeTab.id, v)}
+              onSave={() => onSave(activeTab.id)}
+              onInsertCodeRef={insertCodeRef}
+            />
+          )}
 
-        {/* Modal de generación de código */}
-        {showPromptModal && activeTab && (
-          <CodePromptModal
-            language={activeTab.language}
-            onClose={() => setShowPromptModal(false)}
-            onCodeGenerated={(code) => insertCodeRef.current?.(code)}
+          {/* Modal de generación de código */}
+          {showPromptModal && activeTab && (
+            <CodePromptModal
+              language={activeTab.language}
+              onClose={() => setShowPromptModal(false)}
+              onCodeGenerated={(code) => insertCodeRef.current?.(code)}
+            />
+          )}
+        </div>
+
+        {/* Panel de output */}
+        {showOutput && (
+          <OutputPanel
+            lines={outputLines}
+            running={running}
+            onClear={() => setOutputLines([])}
+            onClose={() => setShowOutput(false)}
+            onStop={handleStop}
           />
         )}
       </div>
