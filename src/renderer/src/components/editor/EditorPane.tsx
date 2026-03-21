@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, type MouseEvent } from 'react'
+import { useRef, useEffect, useCallback, useMemo, type MouseEvent } from 'react'
 import { X, Circle, FileTs, FileJs, FileCss, FileHtml, FileText, FileCode, DiamondsFour } from '@phosphor-icons/react'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import CodeEditor from './CodeEditor'
@@ -55,12 +55,14 @@ function Tab({
   tab,
   isActive,
   isModified,
+  description,
   onSelect,
   onClose,
 }: {
   tab: TabData
   isActive: boolean
   isModified: boolean
+  description?: string
   onSelect: () => void
   onClose: () => void
 }) {
@@ -100,13 +102,17 @@ function Tab({
       <Icon size={15} weight="duotone" style={{ color, flexShrink: 0 }} />
 
       <span
-        className="select-none truncate text-xs"
-        style={{
-          color: isActive ? '#fff' : '#969696',
-          maxWidth: 140,
-        }}
+        className="flex select-none items-baseline gap-1.5 truncate text-xs"
+        style={{ maxWidth: description ? 220 : 140 }}
       >
-        {tab.fileName}
+        <span className="truncate" style={{ color: isActive ? '#fff' : '#969696' }}>
+          {tab.fileName}
+        </span>
+        {description && (
+          <span className="truncate text-[10px]" style={{ color: '#5a5a5e' }}>
+            {description}
+          </span>
+        )}
       </span>
 
       {/* Close / modified indicator */}
@@ -222,6 +228,28 @@ export default function EditorPane({
     return () => el.removeEventListener('wheel', handler)
   }, [])
 
+  // Desambiguar pestañas con el mismo fileName mostrando la carpeta padre
+  const tabDescriptions = useMemo(() => {
+    const map = new Map<string, string>()
+    const byName = new Map<string, TabData[]>()
+    for (const tab of tabs) {
+      const list = byName.get(tab.fileName) ?? []
+      list.push(tab)
+      byName.set(tab.fileName, list)
+    }
+    for (const [, group] of byName) {
+      if (group.length < 2) continue
+      for (const tab of group) {
+        if (!tab.filePath) continue
+        const parts = tab.filePath.split(/[/\\]/)
+        // Tomar la carpeta padre inmediata
+        const parent = parts.length >= 2 ? parts[parts.length - 2] : ''
+        if (parent) map.set(tab.id, parent)
+      }
+    }
+    return map
+  }, [tabs])
+
   if (tabs.length === 0) return <WelcomeScreen />
 
   return (
@@ -239,6 +267,7 @@ export default function EditorPane({
             tab={tab}
             isActive={tab.id === activeTabId}
             isModified={tab.content !== tab.savedContent}
+            description={tabDescriptions.get(tab.id)}
             onSelect={() => onTabSelect(tab.id)}
             onClose={() => onTabClose(tab.id)}
           />
