@@ -17,6 +17,7 @@ type Action =
   | { type: 'MARK_SAVED'; id: string; filePath?: string }
   | { type: 'OPEN_FILE'; filePath: string; content: string }
   | { type: 'NEW_FILE' }
+  | { type: 'CHANGE_LANGUAGE'; id: string; language: string }
 
 let nextId = 1
 
@@ -99,6 +100,14 @@ function reducer(state: EditorState, action: Action): EditorState {
         activeTabId: id,
       }
     }
+
+    case 'CHANGE_LANGUAGE':
+      return {
+        ...state,
+        tabs: state.tabs.map((t) =>
+          t.id === action.id ? { ...t, language: action.language } : t,
+        ),
+      }
 
     default:
       return state
@@ -221,6 +230,11 @@ export default function EditorArea() {
     [state.tabs, saveTab],
   )
 
+  const handleLanguageChange = useCallback(
+    (id: string, language: string) => dispatch({ type: 'CHANGE_LANGUAGE', id, language }),
+    [],
+  )
+
   return (
     <EditorPane
       tabs={state.tabs}
@@ -229,6 +243,7 @@ export default function EditorArea() {
       onTabClose={handleTabClose}
       onContentChange={handleContentChange}
       onSave={handleSave}
+      onLanguageChange={handleLanguageChange}
     />
   )
 }
