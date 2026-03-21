@@ -20,6 +20,10 @@ export interface TerminalCreateOpts {
   cols?: number
   /** Filas iniciales del terminal (default: 24) */
   rows?: number
+  /** Ruta absoluta del shell a ejecutar (ej. powershell.exe, cmd.exe, ruta custom). */
+  shellPath?: string
+  /** Argumentos para el shell. */
+  shellArgs?: string[]
 }
 
 interface TerminalSession {
@@ -55,10 +59,12 @@ export function createTerminal(
   const cols = opts.cols ?? 80
   const rows = opts.rows ?? 24
   const cwd = opts.cwd ?? homedir()
+  const shell = opts.shellPath ?? defaultShell()
+  const shellArgs = opts.shellArgs ?? []
 
   let pty: IPty
   try {
-    pty = ptySpawn(defaultShell(), [], {
+    pty = ptySpawn(shell, shellArgs, {
       name: 'xterm-256color',
       cols,
       rows,
