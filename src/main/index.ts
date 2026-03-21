@@ -5,6 +5,15 @@ import { tmpdir } from 'os'
 import { spawn, type ChildProcess } from 'child_process'
 import { is } from '@electron-toolkit/utils'
 import { IPC_CHANNELS } from './ipcChannels'
+import {
+  listAvailableVersions,
+  listInstalledVersions,
+  installVersion,
+  uninstallVersion,
+  getActiveVersion,
+  setActiveVersion,
+  resolveNodeBinary,
+} from './runtimeManager'
 
 /**
  * Referencia global a la ventana principal.
@@ -565,13 +574,13 @@ ipcMain.handle(
     const tmpFile = join(tmpDir, `script${ext}`)
     await writeFile(tmpFile, code, 'utf-8')
 
-    // Usar el Node embebido de Electron para ejecutar JS
-    const executable = process.execPath
-    const args = runtime === 'node' ? [tmpFile] : [tmpFile]
+    // Resolver el binario de Node.js (embebido o descargado)
+    const { bin, env: runtimeEnv } = await resolveNodeBinary()
+    const args = [tmpFile]
 
-    const child = spawn(executable, args, {
+    const child = spawn(bin, args, {
       cwd: tmpDir,
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+      env: { ...process.env, ...runtimeEnv },
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     })
@@ -608,6 +617,33 @@ ipcMain.handle(IPC_CHANNELS.STOP_CODE, async () => {
     runningProcess.kill()
     runningProcess = null
   }
+})
+
+// ─── IPC: Runtime Version Manager ────────────────────────────────────────────
+
+ipcMain.handle(IPC_CHANNELS.RUNTIME_LIST_AVAILABLE, async () => {
+  return listAvailableVersions()
+})
+
+ipcMain.handle(IPC_CHANNELS.RUNTIME_LIST_INSTALLED, async () => {
+  return listInstalledVersions()
+})
+
+ipcMain.handle(IPC_CHANNELS.RUNTIME_INSTALL, async (_event, version: string) => {
+  if (!mainWindow) return
+  await installVersion(version, mainWindow)
+})
+
+ipcMain.handle(IPC_CHANNELS.RUNTIME_UNINSTALL, async (_event, version: string) => {
+  await uninstallVersion(version)
+})
+
+ipcMain.handle(IPC_CHANNELS.RUNTIME_GET_ACTIVE, async () => {
+  return getActiveVersion()
+})
+
+ipcMain.handle(IPC_CHANNELS.RUNTIME_SET_ACTIVE, async (_event, version: string) => {
+  await setActiveVersion(version)
 })
 
 app.whenReady().then(() => {
