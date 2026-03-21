@@ -1015,11 +1015,39 @@ body {
   padding: 4px 0 0 8px;
 }
 
-/* Resize handle horizontal (entre editor y terminal) */
-.cristal-resize-handle--horizontal {
-  height: 4px;
+/* ═══════════════════════════════════════════════════════════
+   Editor + Terminal split — layout flex vertical
+   ═══════════════════════════════════════════════════════════ */
+
+.cristal-editor-terminal-split {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cristal-editor-terminal-split__editor {
+  flex: 1;
+  min-height: 80px;
+  overflow: hidden;
+}
+
+.cristal-editor-terminal-split__divider {
+  height: 4px;
+  flex-shrink: 0;
   cursor: row-resize;
+  background-color: var(--cristal-border);
+  transition: background-color 0.15s ease;
+}
+
+.cristal-editor-terminal-split__divider:hover {
+  background-color: var(--cristal-accent);
+}
+
+.cristal-editor-terminal-split__terminal {
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 /* ══════════════════════════════════════════════════════════
