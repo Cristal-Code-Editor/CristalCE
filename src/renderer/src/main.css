@@ -209,7 +209,7 @@ body {
 
 .cristal-dropdown {
   position: absolute;
-  right: 0;
+  left: 0;
   top: calc(100% + 4px);
   background-color: #252527;
   border: 1px solid rgba(255, 255, 255, 0.08);
