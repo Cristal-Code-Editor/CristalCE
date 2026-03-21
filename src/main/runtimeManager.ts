@@ -45,10 +45,9 @@ export async function listAvailableVersions(): Promise<NodeVersion[]> {
     files: string[]
   }>
 
-  // Solo versiones con binario Win x64 disponible, últimas 30
+  // Solo versiones con binario Win x64 disponible — TODAS
   return all
     .filter((v) => v.files.includes('win-x64-exe'))
-    .slice(0, 30)
     .map(({ version, lts, date }) => ({ version, lts, date }))
 }
 
