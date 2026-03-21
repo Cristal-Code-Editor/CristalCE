@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, dialog, shell, clipboard, type MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, dialog, shell, clipboard, net, type MenuItemConstructorOptions } from 'electron'
 import { join, dirname, basename } from 'path'
 import { readFile, writeFile, readdir, mkdir, rename, rm } from 'fs/promises'
 import { is } from '@electron-toolkit/utils'
@@ -408,6 +408,119 @@ ipcMain.handle(IPC_CHANNELS.DIALOG_OPEN_FOLDER, async () => {
     mainWindow.webContents.send(IPC_CHANNELS.FILE_OPEN_FOLDER, result.filePaths[0])
   }
 })
+
+// ─── IPC: AI Completions vía proxy → CF Worker → NVIDIA ──────────────────────
+
+/** URL del proxy API y token JWT para autenticar peticiones al backend. */
+const AI_API_URL = 'https://api.cristalce.com'
+let aiAuthToken: string | null = null
+let aiTokenExpiry = 0
+
+/**
+ * Estado de conectividad del proxy AI.
+ * Cuando una solicitud falla por red, se marca offline y se inicia un
+ * sondeo periódico al health-check para reactivar el servicio.
+ */
+let aiOnline = true
+let aiRetryTimer: ReturnType<typeof setInterval> | null = null
+const AI_RETRY_INTERVAL = 30_000 // 30 s entre reintentos de reconexión
+
+/** Detiene el sondeo periódico de salud del proxy AI. */
+function stopAiRetry(): void {
+  if (aiRetryTimer) {
+    clearInterval(aiRetryTimer)
+    aiRetryTimer = null
+  }
+}
+
+/**
+ * Inicia un sondeo periódico al endpoint /health del proxy.
+ * Cuando la respuesta es 200, restaura aiOnline y detiene el sondeo.
+ */
+function startAiRetry(): void {
+  if (aiRetryTimer) return
+  aiRetryTimer = setInterval(async () => {
+    // Si Electron sabe que no hay red, ni intenta
+    if (!net.isOnline()) return
+    try {
+      const res = await net.fetch(`${AI_API_URL}/health`, { method: 'GET' })
+      if (res.ok) {
+        aiOnline = true
+        stopAiRetry()
+      }
+    } catch {
+      // Sigue sin conectividad, el timer continúa
+    }
+  }, AI_RETRY_INTERVAL)
+}
+
+/**
+ * Obtiene o renueva el token JWT del proxy.
+ * El token expira en 24h; se renueva con 1 hora de margen.
+ */
+async function getAiToken(): Promise<string> {
+  const now = Date.now()
+  if (aiAuthToken && now < aiTokenExpiry) return aiAuthToken
+
+  const res = await net.fetch(`${AI_API_URL}/v1/auth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'editor@cristalce.com' }),
+  })
+
+  if (!res.ok) throw new Error(`Auth failed: ${res.status}`)
+
+  const data = (await res.json()) as { token: string }
+  aiAuthToken = data.token
+  // Renovar 1 hora antes de que expire (token dura 24h)
+  aiTokenExpiry = now + 23 * 60 * 60 * 1000
+  return aiAuthToken
+}
+
+/** Payload que el Renderer envía para solicitar autocompletado. */
+interface AiCompletionRequest {
+  prompt: string
+  language: string
+  context?: string
+}
+
+ipcMain.handle(
+  IPC_CHANNELS.AI_COMPLETION,
+  async (_event, req: AiCompletionRequest): Promise<string> => {
+    // Sin conexión a internet o proxy caído → respuesta vacía inmediata
+    if (!net.isOnline() || !aiOnline) return ''
+
+    try {
+      const token = await getAiToken()
+
+      const res = await net.fetch(`${AI_API_URL}/v1/completions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: req.prompt,
+          language: req.language,
+          context: req.context,
+        }),
+      })
+
+      if (!res.ok) {
+        const body = await res.text()
+        throw new Error(`AI completion failed (${res.status}): ${body}`)
+      }
+
+      const data = (await res.json()) as { completion: string }
+      return data.completion
+    } catch {
+      // Fallo de red → marcar offline e iniciar sondeo periódico
+      aiOnline = false
+      startAiRetry()
+      return ''
+    }
+  },
+)
 
 app.whenReady().then(() => {
   createWindow()
