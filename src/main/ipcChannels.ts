@@ -68,6 +68,22 @@ export const IPC_CHANNELS = {
   CODE_STDERR: 'CODE_STDERR',
   /** Main → Renderer: el proceso terminó (exitCode) */
   CODE_EXIT: 'CODE_EXIT',
+
+  // ── Runtime Manager (invoke/handle + send) ──────────────
+  /** Renderer → Main: obtener versiones de Node.js disponibles para descarga */
+  RUNTIME_LIST_AVAILABLE: 'RUNTIME_LIST_AVAILABLE',
+  /** Renderer → Main: obtener versiones instaladas localmente */
+  RUNTIME_LIST_INSTALLED: 'RUNTIME_LIST_INSTALLED',
+  /** Renderer → Main: descargar e instalar una versión específica */
+  RUNTIME_INSTALL: 'RUNTIME_INSTALL',
+  /** Renderer → Main: desinstalar una versión */
+  RUNTIME_UNINSTALL: 'RUNTIME_UNINSTALL',
+  /** Renderer → Main: obtener la versión activa para ejecución */
+  RUNTIME_GET_ACTIVE: 'RUNTIME_GET_ACTIVE',
+  /** Renderer → Main: establecer la versión activa */
+  RUNTIME_SET_ACTIVE: 'RUNTIME_SET_ACTIVE',
+  /** Main → Renderer: progreso de descarga (0-100) */
+  RUNTIME_INSTALL_PROGRESS: 'RUNTIME_INSTALL_PROGRESS',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
