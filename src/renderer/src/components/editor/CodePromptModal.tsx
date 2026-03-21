@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from 'react'
-import { PaperPlaneRight, X, CircleNotch } from '@phosphor-icons/react'
+import { PaperPlaneRight, X, CircleNotch, Sparkle } from '@phosphor-icons/react'
 
 /* ── Props ─────────────────────────────────────────────── */
 
@@ -71,7 +71,6 @@ export default function CodePromptModal({ language, onClose, onCodeGenerated }: 
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      // Ctrl+Enter o Cmd+Enter para enviar
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
         handleSubmit()
@@ -80,111 +79,109 @@ export default function CodePromptModal({ language, onClose, onCodeGenerated }: 
     [handleSubmit],
   )
 
+  const canSubmit = prompt.trim().length > 0 && !generating
+
   return (
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
-      className="absolute inset-0 z-50 flex items-start justify-center pt-[15%]"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
+      className="absolute inset-0 z-50 flex items-start justify-center"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        paddingTop: '12%',
+        animation: 'cristal-backdrop-in 0.2s ease-out',
+      }}
     >
       <div
-        className="flex w-full max-w-[520px] flex-col overflow-hidden rounded-lg border"
-        style={{
-          backgroundColor: '#252526',
-          borderColor: '#454545',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6)',
-          animation: 'cristal-modal-in 0.15s ease-out',
-        }}
+        className="cristal-modal flex w-full flex-col overflow-hidden"
+        style={{ maxWidth: 540, animation: 'cristal-modal-in 0.2s cubic-bezier(0.16, 1, 0.3, 1)' }}
       >
-        {/* Cabecera */}
+        {/* Cabecera con línea de acento superior */}
         <div
-          className="flex items-center justify-between px-3 py-2"
-          style={{ borderBottom: '1px solid #333' }}
+          className="flex items-center gap-2 px-4 py-2.5"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <span className="text-xs font-medium" style={{ color: 'var(--cristal-accent)' }}>
+          <Sparkle size={14} weight="fill" style={{ color: 'var(--cristal-accent)' }} />
+          <span className="flex-1 text-[12px] font-medium" style={{ color: 'var(--cristal-text-normal)' }}>
             Generar código
+          </span>
+          <span
+            className="rounded-sm px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider"
+            style={{ backgroundColor: 'var(--cristal-accent-dim)', color: 'var(--cristal-accent)' }}
+          >
+            AI
           </span>
           <button
             type="button"
             onClick={onClose}
             disabled={generating}
-            className="flex items-center justify-center rounded"
-            style={{
-              width: 22,
-              height: 22,
-              color: '#969696',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#424242')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            className="cristal-icon-btn"
           >
             <X size={14} />
           </button>
         </div>
 
         {/* Cuerpo */}
-        <div className="flex flex-col gap-2 p-3">
-          <textarea
-            ref={inputRef}
-            rows={3}
-            placeholder="Describe el código que necesitas..."
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={generating}
-            className="resize-none rounded border px-2.5 py-2 text-[12px] outline-none"
-            style={{
-              backgroundColor: '#1e1e1e',
-              borderColor: '#3a3a3c',
-              color: 'var(--cristal-text-normal)',
-              lineHeight: '1.5',
-              transition: 'border-color 0.15s',
-            }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--cristal-accent)')}
-            onBlur={(e) => (e.currentTarget.style.borderColor = '#3a3a3c')}
-          />
+        <div className="flex flex-col gap-2.5 px-4 py-3">
+          <div className="relative">
+            <textarea
+              ref={inputRef}
+              rows={3}
+              placeholder="Describe qué código necesitas…"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={generating}
+              className="cristal-textarea"
+            />
+          </div>
 
           {error && (
-            <span className="text-[11px]" style={{ color: '#f44747' }}>
+            <div
+              className="rounded-md px-2.5 py-1.5 text-[11px]"
+              style={{ backgroundColor: 'rgba(244, 71, 71, 0.1)', color: '#f44747' }}
+            >
               {error}
-            </span>
+            </div>
           )}
 
           {/* Indicador de generación */}
           {generating && (
-            <div
-              className="flex items-center gap-2 px-1 text-[11px]"
-              style={{ color: 'var(--cristal-accent)' }}
-            >
-              <CircleNotch size={14} className="cristal-spin" />
-              Generando código...
+            <div className="flex items-center gap-2 py-0.5 text-[11px]" style={{ color: 'var(--cristal-accent)' }}>
+              <CircleNotch size={13} className="cristal-spin" />
+              <span>Generando…</span>
+              <div className="ml-auto flex gap-[3px]">
+                <span className="cristal-pulse-dot" style={{ animationDelay: '0ms' }} />
+                <span className="cristal-pulse-dot" style={{ animationDelay: '150ms' }} />
+                <span className="cristal-pulse-dot" style={{ animationDelay: '300ms' }} />
+              </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
         <div
-          className="flex items-center justify-between px-3 py-2"
-          style={{ borderTop: '1px solid #333' }}
+          className="flex items-center justify-between px-4 py-2.5"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <span className="text-[10px]" style={{ color: 'var(--cristal-text-faint)' }}>
-            Ctrl+Enter para enviar
-          </span>
+          <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--cristal-text-faint)' }}>
+            <kbd className="cristal-kbd">Ctrl</kbd>
+            <span>+</span>
+            <kbd className="cristal-kbd">Enter</kbd>
+          </div>
+
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!prompt.trim() || generating}
-            className="flex items-center gap-1 rounded px-3 py-1 text-[11px] font-medium"
-            style={{
-              backgroundColor:
-                prompt.trim() && !generating ? 'var(--cristal-accent)' : '#3a3a3c',
-              color: prompt.trim() && !generating ? '#000' : '#666',
-              transition: 'all 0.15s',
-              cursor: prompt.trim() && !generating ? 'pointer' : 'default',
-            }}
+            disabled={!canSubmit}
+            className={`cristal-btn-primary ${canSubmit ? '' : 'cristal-btn-primary--disabled'}`}
           >
-            <PaperPlaneRight size={12} weight="bold" />
-            Generar
+            {generating ? (
+              <CircleNotch size={12} className="cristal-spin" />
+            ) : (
+              <PaperPlaneRight size={12} weight="bold" />
+            )}
+            <span>{generating ? 'Generando…' : 'Generar'}</span>
           </button>
         </div>
       </div>
