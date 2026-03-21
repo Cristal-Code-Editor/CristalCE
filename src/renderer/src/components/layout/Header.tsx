@@ -1,6 +1,6 @@
 import { Minus, Square, X } from '@phosphor-icons/react'
 
-const MENU_ITEMS = ['File', 'Edit', 'Selection', 'View', 'Go', 'Help'] as const
+const MENU_ITEMS = ['File', 'Edit', 'Selection', 'View', 'Go', 'Terminal', 'Help'] as const
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
