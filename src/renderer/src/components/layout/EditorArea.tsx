@@ -121,9 +121,14 @@ const INITIAL_STATE: EditorState = {
 
 /* ── Component ─────────────────────────────────────────── */
 
-export default function EditorArea() {
+export default function EditorArea({ onHasEditor }: { onHasEditor?: (has: boolean) => void }) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
   const { registerFileHandler } = useWorkspace()
+
+  // Notificar al padre si hay tabs abiertos
+  useEffect(() => {
+    onHasEditor?.(state.tabs.length > 0)
+  }, [state.tabs.length, onHasEditor])
 
   // ── Registrar handler para apertura de archivos desde Sidebar ──
   const openFileFromPath = useCallback(async (filePath: string) => {
