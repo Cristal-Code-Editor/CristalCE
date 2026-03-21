@@ -52,6 +52,10 @@ export const IPC_CHANNELS = {
   SHOW_CONTEXT_MENU: 'SHOW_CONTEXT_MENU',
   /** Renderer → Main: abrir diálogo nativo de selección de carpeta */
   DIALOG_OPEN_FOLDER: 'DIALOG_OPEN_FOLDER',
+
+  // ── AI Completions (invoke/handle) ──────────────────────
+  /** Renderer → Main: solicitar autocompletado de código vía proxy AI */
+  AI_COMPLETION: 'AI_COMPLETION',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
