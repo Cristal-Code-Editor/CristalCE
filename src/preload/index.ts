@@ -98,6 +98,20 @@ export interface CristalAPI {
   /** Escucha progreso de descarga (0-100). */
   onRuntimeInstallProgress: (callback: (pct: number) => void) => () => void
 
+  // ── Terminal Integrada ─────────────────────────────────────────
+  /** Crea una nueva sesión PTY. Retorna el ID de la terminal. */
+  terminalCreate: (opts?: { cwd?: string; cols?: number; rows?: number }) => Promise<string | null>
+  /** Envía datos de teclado al PTY. */
+  terminalWrite: (id: string, data: string) => void
+  /** Redimensiona el PTY (cols × rows). */
+  terminalResize: (id: string, cols: number, rows: number) => void
+  /** Destruye una sesión de terminal. */
+  terminalDestroy: (id: string) => Promise<void>
+  /** Escucha datos de salida del PTY. */
+  onTerminalData: (callback: (id: string, data: string) => void) => () => void
+  /** Escucha cuando una sesión PTY termina. */
+  onTerminalExit: (callback: (id: string, exitCode: number) => void) => () => void
+
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
   /** Alterna maximizar / restaurar la ventana principal. */
@@ -242,6 +256,35 @@ contextBridge.exposeInMainWorld('cristalAPI', {
     const handler = (_event: Electron.IpcRendererEvent, pct: number) => callback(pct)
     ipcRenderer.on(IPC_CHANNELS.RUNTIME_INSTALL_PROGRESS, handler)
     return () => { ipcRenderer.removeListener(IPC_CHANNELS.RUNTIME_INSTALL_PROGRESS, handler) }
+  },
+
+  // ── Terminal Integrada ─────────────────────────────────────────
+  terminalCreate: (opts?: { cwd?: string; cols?: number; rows?: number }) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.TERMINAL_CREATE, opts)
+  },
+
+  terminalWrite: (id: string, data: string) => {
+    ipcRenderer.send(IPC_CHANNELS.TERMINAL_WRITE, id, data)
+  },
+
+  terminalResize: (id: string, cols: number, rows: number) => {
+    ipcRenderer.send(IPC_CHANNELS.TERMINAL_RESIZE, id, cols, rows)
+  },
+
+  terminalDestroy: (id: string) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.TERMINAL_DESTROY, id)
+  },
+
+  onTerminalData: (callback: (id: string, data: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, id: string, data: string) => callback(id, data)
+    ipcRenderer.on(IPC_CHANNELS.TERMINAL_DATA, handler)
+    return () => { ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL_DATA, handler) }
+  },
+
+  onTerminalExit: (callback: (id: string, exitCode: number) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, id: string, exitCode: number) => callback(id, exitCode)
+    ipcRenderer.on(IPC_CHANNELS.TERMINAL_EXIT, handler)
+    return () => { ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL_EXIT, handler) }
   },
 
   windowMinimize: () => {
