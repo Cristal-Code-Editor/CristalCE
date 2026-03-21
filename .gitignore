@@ -4,3 +4,6 @@ dist
 *.env
 *.pem
 *.key
+
+.idea
+.vscode
