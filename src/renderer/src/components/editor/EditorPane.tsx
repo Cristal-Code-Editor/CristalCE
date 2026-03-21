@@ -1,7 +1,9 @@
-import { useRef, useEffect, useCallback, useMemo, type MouseEvent } from 'react'
+import { useRef, useState, useEffect, useCallback, useMemo, type MouseEvent } from 'react'
 import { X, Circle, FileTs, FileJs, FileCss, FileHtml, FileText, FileCode, DiamondsFour } from '@phosphor-icons/react'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import CodeEditor from './CodeEditor'
+import EditorToolbar from './EditorToolbar'
+import CodePromptModal from './CodePromptModal'
 
 /* ── Types ─────────────────────────────────────────────── */
 
@@ -22,6 +24,7 @@ interface EditorPaneProps {
   onTabClose: (id: string) => void
   onContentChange: (id: string, content: string) => void
   onSave: (id: string) => void
+  onLanguageChange: (id: string, language: string) => void
 }
 
 /* ── File icon lookup ──────────────────────────────────── */
@@ -203,9 +206,17 @@ export default function EditorPane({
   onTabClose,
   onContentChange,
   onSave,
+  onLanguageChange,
 }: EditorPaneProps) {
   const tabBarRef = useRef<HTMLDivElement>(null)
   const activeTab = tabs.find((t) => t.id === activeTabId)
+
+  // Estado global de autocompletado AI y modal de generación
+  const [aiEnabled, setAiEnabled] = useState(true)
+  const [showPromptModal, setShowPromptModal] = useState(false)
+
+  // Referencia para insertar código generado en la posición del cursor
+  const insertCodeRef = useRef<((code: string) => void) | null>(null)
 
   // Scroll active tab into view
   useEffect(() => {
@@ -274,6 +285,17 @@ export default function EditorPane({
         ))}
       </div>
 
+      {/* Barra de herramientas del editor */}
+      {activeTab && (
+        <EditorToolbar
+          language={activeTab.language}
+          aiEnabled={aiEnabled}
+          onLanguageChange={(lang) => onLanguageChange(activeTab.id, lang)}
+          onAiToggle={() => setAiEnabled((v) => !v)}
+          onRequestCode={() => setShowPromptModal(true)}
+        />
+      )}
+
       {/* Editor area */}
       <div className="relative min-h-0 flex-1">
         {activeTab && (
@@ -281,8 +303,19 @@ export default function EditorPane({
             key={activeTab.id}
             language={activeTab.language}
             defaultValue={activeTab.content}
+            aiEnabled={aiEnabled}
             onChange={(v) => onContentChange(activeTab.id, v)}
             onSave={() => onSave(activeTab.id)}
+            onInsertCodeRef={insertCodeRef}
+          />
+        )}
+
+        {/* Modal de generación de código */}
+        {showPromptModal && activeTab && (
+          <CodePromptModal
+            language={activeTab.language}
+            onClose={() => setShowPromptModal(false)}
+            onCodeGenerated={(code) => insertCodeRef.current?.(code)}
           />
         )}
       </div>
