@@ -32,6 +32,7 @@ export interface TerminalPanelHandle {
 const TerminalPanel = forwardRef<TerminalPanelHandle, TerminalPanelProps>(function TerminalPanel({ cwd, onHide }, ref) {
   const [tabs, setTabs] = useState<TermTab[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const nextNum = useRef(1)
 
   // Crear terminal automáticamente al montar si no hay ninguna
@@ -43,12 +44,21 @@ const TerminalPanel = forwardRef<TerminalPanelHandle, TerminalPanelProps>(functi
   }, [])
 
   const createTab = useCallback(async () => {
-    const id = await window.cristalAPI.terminalCreate({ cwd })
-    if (!id) return
-    const num = nextNum.current++
-    const label = `Terminal ${num}`
-    setTabs((prev) => [...prev, { id, label }])
-    setActiveId(id)
+    setError(null)
+    try {
+      const id = await window.cristalAPI.terminalCreate({ cwd })
+      if (!id) {
+        setError('No se pudo crear la terminal. Verifica que las dependencias nativas estén correctamente compiladas.')
+        return
+      }
+      const num = nextNum.current++
+      const label = `Terminal ${num}`
+      setTabs((prev) => [...prev, { id, label }])
+      setActiveId(id)
+    } catch (err) {
+      console.error('[TerminalPanel] Error al crear terminal:', err)
+      setError('Error al inicializar la terminal. Revisa la consola para más detalles.')
+    }
   }, [cwd])
 
   const closeTab = useCallback(async (tabId: string) => {
@@ -114,8 +124,29 @@ const TerminalPanel = forwardRef<TerminalPanelHandle, TerminalPanelProps>(functi
     return unsub
   }, [createTab, closeTab, activeId])
 
-  // Si no hay tabs, el panel no se renderiza
-  if (tabs.length === 0) return null
+  // Si no hay tabs, mostrar error o estado vacío
+  if (tabs.length === 0) {
+    return (
+      <div className="cristal-terminal">
+        <div className="cristal-terminal__toolbar">
+          <div className="cristal-terminal__tabs" />
+          <div className="cristal-terminal__actions">
+            <button type="button" className="cristal-terminal__action-btn" onClick={onHide} title="Ocultar panel">
+              <ArrowsOutSimple size={14} weight="bold" style={{ transform: 'rotate(45deg)' }} />
+            </button>
+          </div>
+        </div>
+        <div className="cristal-terminal__error">
+          <span>{error ?? 'Creando terminal…'}</span>
+          {error && (
+            <button type="button" className="cristal-terminal__error-retry" onClick={createTab}>
+              Reintentar
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="cristal-terminal">
