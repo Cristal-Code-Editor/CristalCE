@@ -66,6 +66,10 @@ export interface CristalAPI {
   /** Abre el diálogo nativo para seleccionar carpeta. */
   openFolderDialog: () => Promise<void>
 
+  // ── AI Completions ─────────────────────────────────────
+  /** Solicita autocompletado de código al proxy AI. */
+  requestCompletion: (prompt: string, language: string, context?: string) => Promise<string>
+
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
   /** Alterna maximizar / restaurar la ventana principal. */
@@ -164,6 +168,11 @@ contextBridge.exposeInMainWorld('cristalAPI', {
 
   openFolderDialog: (): Promise<void> => {
     return ipcRenderer.invoke(IPC_CHANNELS.DIALOG_OPEN_FOLDER)
+  },
+
+  // ── AI Completions ────────────────────────────────────
+  requestCompletion: (prompt: string, language: string, context?: string): Promise<string> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AI_COMPLETION, { prompt, language, context })
   },
 
   windowMinimize: () => {
