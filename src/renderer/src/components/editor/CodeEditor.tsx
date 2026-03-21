@@ -1,13 +1,16 @@
 import * as monaco from 'monaco-editor'
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, type MutableRefObject } from 'react'
 
 /* ── Props ─────────────────────────────────────────────── */
 
 interface CodeEditorProps {
   language: string
   defaultValue: string
+  aiEnabled: boolean
   onChange: (value: string) => void
   onSave?: () => void
+  /** Ref inyectada por el padre para insertar código generado en la posición del cursor. */
+  onInsertCodeRef?: MutableRefObject<((code: string) => void) | null>
 }
 
 /* ── Theme (defined once globally) ─────────────────────── */
@@ -364,9 +367,15 @@ function ensureTheme() {
 
 /* ── Component ─────────────────────────────────────────── */
 
-export default function CodeEditor({ language, defaultValue, onChange, onSave }: CodeEditorProps) {
+export default function CodeEditor({ language, defaultValue, aiEnabled, onChange, onSave, onInsertCodeRef }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+
+  // Ref para que el provider inline lea el estado actualizado de aiEnabled
+  const aiEnabledRef = useRef(aiEnabled)
+  useEffect(() => {
+    aiEnabledRef.current = aiEnabled
+  }, [aiEnabled])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -440,7 +449,10 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave }:
 
     const inlineProvider = monaco.languages.registerInlineCompletionsProvider(language, {
       provideInlineCompletions: async (model, position, _ctx, cancelToken) => {
-        // Texto hasta la posición del cursor (máx 2000 chars de contexto)
+        // Si el autocompletado AI está desactivado, no solicitar
+        if (!aiEnabledRef.current) return { items: [] }
+
+        // Texto hasta la posición del cursor (máx ~50 líneas de contexto)
         const textUntilPosition = model.getValueInRange({
           startLineNumber: Math.max(1, position.lineNumber - 50),
           startColumn: 1,
@@ -507,6 +519,25 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave }:
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, onSave)
     }
 
+    // Exponer función para insertar código generado en la posición del cursor
+    if (onInsertCodeRef) {
+      onInsertCodeRef.current = (code: string) => {
+        const position = editor.getPosition()
+        if (!position) return
+        editor.executeEdits('cristal-ai-generate', [
+          {
+            range: new monaco.Range(
+              position.lineNumber,
+              position.column,
+              position.lineNumber,
+              position.column,
+            ),
+            text: code,
+          },
+        ])
+      }
+    }
+
     // Propagate changes
     const disposable = editor.onDidChangeModelContent(() => {
       onChange(editor.getValue())
@@ -516,6 +547,7 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave }:
 
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer)
+      if (onInsertCodeRef) onInsertCodeRef.current = null
       inlineProvider.dispose()
       disposable.dispose()
       editor.dispose()
