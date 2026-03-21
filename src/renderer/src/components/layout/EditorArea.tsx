@@ -121,7 +121,7 @@ const INITIAL_STATE: EditorState = {
 
 /* ── Component ─────────────────────────────────────────── */
 
-export default function EditorArea({ onHasEditor }: { onHasEditor?: (has: boolean) => void }) {
+export default function EditorArea({ onHasEditor, onActiveFileChange }: { onHasEditor?: (has: boolean) => void; onActiveFileChange?: (filePath: string | null) => void }) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
   const { registerFileHandler } = useWorkspace()
 
@@ -129,6 +129,12 @@ export default function EditorArea({ onHasEditor }: { onHasEditor?: (has: boolea
   useEffect(() => {
     onHasEditor?.(state.tabs.length > 0)
   }, [state.tabs.length, onHasEditor])
+
+  // Notificar al padre la ruta del archivo activo
+  useEffect(() => {
+    const tab = state.tabs.find((t) => t.id === state.activeTabId)
+    onActiveFileChange?.(tab?.filePath ?? null)
+  }, [state.activeTabId, state.tabs, onActiveFileChange])
 
   // ── Registrar handler para apertura de archivos desde Sidebar ──
   const openFileFromPath = useCallback(async (filePath: string) => {
