@@ -98,6 +98,8 @@ export const IPC_CHANNELS = {
   TERMINAL_DATA: 'TERMINAL_DATA',
   /** Main → Renderer: la sesión PTY terminó (exitCode) */
   TERMINAL_EXIT: 'TERMINAL_EXIT',
+  /** Renderer → Main: abrir diálogo para seleccionar ejecutable de shell */
+  TERMINAL_SELECT_SHELL: 'TERMINAL_SELECT_SHELL',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
