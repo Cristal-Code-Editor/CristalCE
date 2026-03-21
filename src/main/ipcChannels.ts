@@ -56,6 +56,18 @@ export const IPC_CHANNELS = {
   // ── AI Completions (invoke/handle) ──────────────────────
   /** Renderer → Main: solicitar autocompletado de código vía proxy AI */
   AI_COMPLETION: 'AI_COMPLETION',
+
+  // ── Code Execution (invoke/handle + send) ───────────────
+  /** Renderer → Main: ejecutar código en un proceso hijo */
+  RUN_CODE: 'RUN_CODE',
+  /** Renderer → Main: matar el proceso hijo activo */
+  STOP_CODE: 'STOP_CODE',
+  /** Main → Renderer: fragmento de stdout del proceso */
+  CODE_STDOUT: 'CODE_STDOUT',
+  /** Main → Renderer: fragmento de stderr del proceso */
+  CODE_STDERR: 'CODE_STDERR',
+  /** Main → Renderer: el proceso terminó (exitCode) */
+  CODE_EXIT: 'CODE_EXIT',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
