@@ -192,15 +192,110 @@ function ensureTheme() {
       { token: 'number.cpp', foreground: 'b5cea8' },
       { token: 'directive.cpp', foreground: 'c586c0' },
 
-      // ── Java / Kotlin / C# ──────────────────────────────
+      // ── Java ────────────────────────────────────────────
       { token: 'keyword.java', foreground: '569cd6' },
+      { token: 'keyword.control.java', foreground: 'c586c0' },
       { token: 'type.identifier.java', foreground: '4ec9b0' },
+      { token: 'identifier.java', foreground: '9cdcfe' },
       { token: 'annotation.java', foreground: 'dcdcaa' },
-      { token: 'keyword.kotlin', foreground: '569cd6' },
-      { token: 'type.identifier.kotlin', foreground: '4ec9b0' },
-      { token: 'annotation.kotlin', foreground: 'dcdcaa' },
+      { token: 'string.java', foreground: 'ce9178' },
+      { token: 'number.java', foreground: 'b5cea8' },
+      { token: 'number.hex.java', foreground: 'b5cea8' },
+      { token: 'comment.java', foreground: '6a9955', fontStyle: 'italic' },
+      { token: 'delimiter.java', foreground: 'd4d4d4' },
+      { token: 'operator.java', foreground: 'd4d4d4' },
+
+      // ── C# ──────────────────────────────────────────────
       { token: 'keyword.cs', foreground: '569cd6' },
+      { token: 'keyword.control.cs', foreground: 'c586c0' },
       { token: 'type.identifier.cs', foreground: '4ec9b0' },
+      { token: 'identifier.cs', foreground: '9cdcfe' },
+      { token: 'annotation.cs', foreground: 'dcdcaa' },
+      { token: 'string.cs', foreground: 'ce9178' },
+      { token: 'string.escape.cs', foreground: 'd7ba7d' },
+      { token: 'number.cs', foreground: 'b5cea8' },
+      { token: 'number.hex.cs', foreground: 'b5cea8' },
+      { token: 'comment.cs', foreground: '6a9955', fontStyle: 'italic' },
+      { token: 'delimiter.cs', foreground: 'd4d4d4' },
+      { token: 'operator.cs', foreground: 'd4d4d4' },
+
+      // ── Kotlin ──────────────────────────────────────────
+      { token: 'keyword.kotlin', foreground: '569cd6' },
+      { token: 'keyword.control.kotlin', foreground: 'c586c0' },
+      { token: 'type.identifier.kotlin', foreground: '4ec9b0' },
+      { token: 'identifier.kotlin', foreground: '9cdcfe' },
+      { token: 'annotation.kotlin', foreground: 'dcdcaa' },
+      { token: 'string.kotlin', foreground: 'ce9178' },
+      { token: 'number.kotlin', foreground: 'b5cea8' },
+      { token: 'comment.kotlin', foreground: '6a9955', fontStyle: 'italic' },
+      { token: 'delimiter.kotlin', foreground: 'd4d4d4' },
+
+      // ── Swift ────────────────────────────────────────────
+      { token: 'keyword.swift', foreground: 'c586c0' },
+      { token: 'type.identifier.swift', foreground: '4ec9b0' },
+      { token: 'identifier.swift', foreground: '9cdcfe' },
+      { token: 'string.swift', foreground: 'ce9178' },
+      { token: 'number.swift', foreground: 'b5cea8' },
+      { token: 'comment.swift', foreground: '6a9955', fontStyle: 'italic' },
+      { token: 'attribute.swift', foreground: 'dcdcaa' },
+      { token: 'operator.swift', foreground: 'd4d4d4' },
+      { token: 'delimiter.swift', foreground: 'd4d4d4' },
+
+      // ── Dart ─────────────────────────────────────────────
+      { token: 'keyword.dart', foreground: '569cd6' },
+      { token: 'keyword.control.dart', foreground: 'c586c0' },
+      { token: 'type.identifier.dart', foreground: '4ec9b0' },
+      { token: 'identifier.dart', foreground: '9cdcfe' },
+      { token: 'annotation.dart', foreground: 'dcdcaa' },
+      { token: 'string.dart', foreground: 'ce9178' },
+      { token: 'string.escape.dart', foreground: 'd7ba7d' },
+      { token: 'number.dart', foreground: 'b5cea8' },
+      { token: 'comment.dart', foreground: '6a9955', fontStyle: 'italic' },
+      { token: 'delimiter.dart', foreground: 'd4d4d4' },
+
+      // ── Lua ──────────────────────────────────────────────
+      { token: 'keyword.lua', foreground: '569cd6' },
+      { token: 'identifier.lua', foreground: '9cdcfe' },
+      { token: 'string.lua', foreground: 'ce9178' },
+      { token: 'number.lua', foreground: 'b5cea8' },
+      { token: 'comment.lua', foreground: '6a9955', fontStyle: 'italic' },
+      { token: 'delimiter.lua', foreground: 'd4d4d4' },
+      { token: 'global.lua', foreground: 'dcdcaa' },
+
+      // ── PowerShell ──────────────────────────────────────
+      { token: 'keyword.powershell', foreground: '569cd6' },
+      { token: 'variable.powershell', foreground: '9cdcfe' },
+      { token: 'string.powershell', foreground: 'ce9178' },
+      { token: 'number.powershell', foreground: 'b5cea8' },
+      { token: 'comment.powershell', foreground: '6a9955', fontStyle: 'italic' },
+      { token: 'delimiter.powershell', foreground: 'd4d4d4' },
+      { token: 'type.powershell', foreground: '4ec9b0' },
+
+      // ── Perl ─────────────────────────────────────────────
+      { token: 'keyword.perl', foreground: 'c586c0' },
+      { token: 'variable.perl', foreground: '9cdcfe' },
+      { token: 'string.perl', foreground: 'ce9178' },
+      { token: 'number.perl', foreground: 'b5cea8' },
+      { token: 'comment.perl', foreground: '6a9955', fontStyle: 'italic' },
+      { token: 'regexp.perl', foreground: 'd16969' },
+      { token: 'operator.perl', foreground: 'd4d4d4' },
+
+      // ── Scala ────────────────────────────────────────────
+      { token: 'keyword.scala', foreground: '569cd6' },
+      { token: 'keyword.control.scala', foreground: 'c586c0' },
+      { token: 'type.identifier.scala', foreground: '4ec9b0' },
+      { token: 'identifier.scala', foreground: '9cdcfe' },
+      { token: 'annotation.scala', foreground: 'dcdcaa' },
+      { token: 'string.scala', foreground: 'ce9178' },
+      { token: 'number.scala', foreground: 'b5cea8' },
+      { token: 'comment.scala', foreground: '6a9955', fontStyle: 'italic' },
+
+      // ── Visual Basic ────────────────────────────────────
+      { token: 'keyword.vb', foreground: '569cd6' },
+      { token: 'identifier.vb', foreground: '9cdcfe' },
+      { token: 'string.vb', foreground: 'ce9178' },
+      { token: 'number.vb', foreground: 'b5cea8' },
+      { token: 'comment.vb', foreground: '6a9955', fontStyle: 'italic' },
 
       // ── PHP ─────────────────────────────────────────────
       { token: 'metatag.php', foreground: '569cd6' },
@@ -331,9 +426,75 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave }:
       suggestOnTriggerCharacters: true,
       parameterHints: { enabled: true },
       contextmenu: true,
+
+      // AI inline completions (ghost text)
+      inlineSuggest: { enabled: true },
     })
 
     editorRef.current = editor
+
+    // ── AI Inline Completion Provider ──────────────────────
+    // Muestra sugerencias ghost-text del modelo Qwen vía proxy.
+    // Se dispara tras 600ms de inactividad para no saturar el backend.
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+    const inlineProvider = monaco.languages.registerInlineCompletionsProvider(language, {
+      provideInlineCompletions: async (model, position, _ctx, cancelToken) => {
+        // Texto hasta la posición del cursor (máx 2000 chars de contexto)
+        const textUntilPosition = model.getValueInRange({
+          startLineNumber: Math.max(1, position.lineNumber - 50),
+          startColumn: 1,
+          endLineNumber: position.lineNumber,
+          endColumn: position.column,
+        })
+
+        // No solicitar si la línea está vacía o muy corta
+        if (textUntilPosition.trim().length < 5) return { items: [] }
+
+        // Debounce: esperar 600ms de inactividad
+        if (debounceTimer) clearTimeout(debounceTimer)
+
+        const completion = await new Promise<string>((resolve) => {
+          debounceTimer = setTimeout(async () => {
+            if (cancelToken.isCancellationRequested) {
+              resolve('')
+              return
+            }
+            try {
+              const result = await window.cristalAPI.requestCompletion(
+                textUntilPosition,
+                language,
+              )
+              resolve(result)
+            } catch {
+              resolve('')
+            }
+          }, 600)
+
+          cancelToken.onCancellationRequested(() => {
+            if (debounceTimer) clearTimeout(debounceTimer)
+            resolve('')
+          })
+        })
+
+        if (!completion) return { items: [] }
+
+        return {
+          items: [
+            {
+              insertText: completion,
+              range: new monaco.Range(
+                position.lineNumber,
+                position.column,
+                position.lineNumber,
+                position.column,
+              ),
+            },
+          ],
+        }
+      },
+      freeInlineCompletions: () => {},
+    })
 
     // Forzar recálculo de métricas de fuente para alinear cursor correctamente
     // Workaround: Monaco calcula métricas antes de que la fuente cargue completamente.
@@ -354,6 +515,8 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave }:
     editor.focus()
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer)
+      inlineProvider.dispose()
       disposable.dispose()
       editor.dispose()
     }
