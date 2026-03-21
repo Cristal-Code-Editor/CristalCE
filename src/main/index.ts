@@ -1,6 +1,8 @@
 import { app, BrowserWindow, ipcMain, Menu, dialog, shell, clipboard, net, type MenuItemConstructorOptions } from 'electron'
 import { join, dirname, basename } from 'path'
-import { readFile, writeFile, readdir, mkdir, rename, rm } from 'fs/promises'
+import { readFile, writeFile, readdir, mkdir, rename, rm, mkdtemp } from 'fs/promises'
+import { tmpdir } from 'os'
+import { spawn, type ChildProcess } from 'child_process'
 import { is } from '@electron-toolkit/utils'
 import { IPC_CHANNELS } from './ipcChannels'
 
@@ -521,6 +523,92 @@ ipcMain.handle(
     }
   },
 )
+
+// ─── IPC: Ejecución de código (child_process) ────────────────────────────────
+
+/** Proceso hijo activo. Solo uno a la vez por seguridad. */
+let runningProcess: ChildProcess | null = null
+
+/** Lenguajes soportados y el runtime que usan */
+const RUNNABLE_LANGUAGES: Record<string, string> = {
+  javascript: 'node',
+  typescript: 'node',
+}
+
+/** Extensiones de archivo temporal según lenguaje */
+const LANG_EXT: Record<string, string> = {
+  javascript: '.js',
+  typescript: '.js',
+}
+
+ipcMain.handle(
+  IPC_CHANNELS.RUN_CODE,
+  async (_event, code: string, language: string): Promise<void> => {
+    if (!mainWindow) return
+
+    // Matar proceso previo si existe
+    if (runningProcess) {
+      runningProcess.kill()
+      runningProcess = null
+    }
+
+    const runtime = RUNNABLE_LANGUAGES[language]
+    if (!runtime) {
+      mainWindow.webContents.send(IPC_CHANNELS.CODE_STDERR, `Lenguaje "${language}" no soportado para ejecución.\n`)
+      mainWindow.webContents.send(IPC_CHANNELS.CODE_EXIT, 1)
+      return
+    }
+
+    // Escribir código a archivo temporal
+    const tmpDir = await mkdtemp(join(tmpdir(), 'cristalce-'))
+    const ext = LANG_EXT[language] ?? '.js'
+    const tmpFile = join(tmpDir, `script${ext}`)
+    await writeFile(tmpFile, code, 'utf-8')
+
+    // Usar el Node embebido de Electron para ejecutar JS
+    const executable = process.execPath
+    const args = runtime === 'node' ? [tmpFile] : [tmpFile]
+
+    const child = spawn(executable, args, {
+      cwd: tmpDir,
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    })
+
+    runningProcess = child
+    const win = mainWindow
+
+    child.stdout?.on('data', (chunk: Buffer) => {
+      win.webContents.send(IPC_CHANNELS.CODE_STDOUT, chunk.toString('utf-8'))
+    })
+
+    child.stderr?.on('data', (chunk: Buffer) => {
+      win.webContents.send(IPC_CHANNELS.CODE_STDERR, chunk.toString('utf-8'))
+    })
+
+    child.on('close', async (exitCode) => {
+      win.webContents.send(IPC_CHANNELS.CODE_EXIT, exitCode ?? 1)
+      runningProcess = null
+      // Limpiar archivo temporal
+      await rm(tmpDir, { recursive: true }).catch(() => {})
+    })
+
+    child.on('error', async (err) => {
+      win.webContents.send(IPC_CHANNELS.CODE_STDERR, `Error: ${err.message}\n`)
+      win.webContents.send(IPC_CHANNELS.CODE_EXIT, 1)
+      runningProcess = null
+      await rm(tmpDir, { recursive: true }).catch(() => {})
+    })
+  },
+)
+
+ipcMain.handle(IPC_CHANNELS.STOP_CODE, async () => {
+  if (runningProcess) {
+    runningProcess.kill()
+    runningProcess = null
+  }
+})
 
 app.whenReady().then(() => {
   createWindow()
