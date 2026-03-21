@@ -50,28 +50,38 @@ function defaultShell(): string {
 export function createTerminal(
   window: BrowserWindow,
   opts: TerminalCreateOpts = {},
-): string {
+): string | null {
   const id = `term-${nextId++}`
   const cols = opts.cols ?? 80
   const rows = opts.rows ?? 24
   const cwd = opts.cwd ?? homedir()
 
-  const pty = ptySpawn(defaultShell(), [], {
-    name: 'xterm-256color',
-    cols,
-    rows,
-    cwd,
-    env: process.env as Record<string, string>,
-  })
+  let pty: IPty
+  try {
+    pty = ptySpawn(defaultShell(), [], {
+      name: 'xterm-256color',
+      cols,
+      rows,
+      cwd,
+      env: process.env as Record<string, string>,
+    })
+  } catch (err) {
+    console.error('[TerminalManager] Error al crear sesión PTY:', err)
+    return null
+  }
 
   // Datos de salida del PTY → Renderer
   pty.onData((data) => {
-    window.webContents.send(IPC_CHANNELS.TERMINAL_DATA, id, data)
+    if (!window.isDestroyed()) {
+      window.webContents.send(IPC_CHANNELS.TERMINAL_DATA, id, data)
+    }
   })
 
   // PTY terminó
   pty.onExit(({ exitCode }) => {
-    window.webContents.send(IPC_CHANNELS.TERMINAL_EXIT, id, exitCode)
+    if (!window.isDestroyed()) {
+      window.webContents.send(IPC_CHANNELS.TERMINAL_EXIT, id, exitCode)
+    }
     sessions.delete(id)
   })
 
