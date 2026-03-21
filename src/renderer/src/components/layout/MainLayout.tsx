@@ -9,20 +9,30 @@ import StatusBar from './StatusBar'
 import TerminalPanel, { type TerminalPanelHandle } from '../terminal/TerminalPanel'
 import { useWorkspace } from '../../context/WorkspaceContext'
 
+/* ── Altura mínima del panel de terminal (px) ──────────── */
+const TERMINAL_MIN_H = 80
+const TERMINAL_DEFAULT_H = 250
+
 /**
  * Layout principal de CristalCE — identidad visual premium propia.
  * Estructura: Header → [ActivityBar | Sidebar (resize) | Editor + Terminal] → StatusBar.
- * Paneles redimensionables con persistencia en localStorage.
+ *
+ * El split Editor/Terminal usa flex + drag manual (como VS Code)
+ * para evitar el bug de pantalla negra al inyectar paneles dinámicos
+ * dentro de react-resizable-panels.
  */
 export default function MainLayout() {
   const [hasEditor, setHasEditor] = useState(false)
   const [showTerminal, setShowTerminal] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [terminalHeight, setTerminalHeight] = useState(TERMINAL_DEFAULT_H)
   const handleHasEditor = useCallback((v: boolean) => setHasEditor(v), [])
   const { state } = useWorkspace()
 
   const terminalRef = useRef<TerminalPanelHandle>(null)
   const activeFilePathRef = useRef<string | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const dragging = useRef(false)
 
   const handleActiveFileChange = useCallback((fp: string | null) => {
     activeFilePathRef.current = fp
@@ -32,6 +42,33 @@ export default function MainLayout() {
   const showToast = useCallback((msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(null), 3000)
+  }, [])
+
+  /* ── Drag resize del separator terminal ──────────────── */
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    dragging.current = true
+    document.body.style.cursor = 'row-resize'
+    document.body.style.userSelect = 'none'
+
+    const onMove = (ev: MouseEvent) => {
+      if (!dragging.current || !containerRef.current) return
+      const rect = containerRef.current.getBoundingClientRect()
+      const maxH = rect.height - TERMINAL_MIN_H
+      const newH = Math.max(TERMINAL_MIN_H, rect.bottom - ev.clientY)
+      setTerminalHeight(Math.min(newH, maxH))
+    }
+
+    const onUp = () => {
+      dragging.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
   }, [])
 
   // Escuchar acciones de menú del Terminal
@@ -78,59 +115,55 @@ export default function MainLayout() {
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden">
-      {/* Header — cabecera personalizada con menú simulado y logo */}
       <Header />
 
-      {/* Zona principal: ActivityBar + Paneles redimensionables */}
       <div className="flex flex-1 overflow-hidden">
-        {/* ActivityBar — ancho fijo 48px, fuera del sistema de paneles */}
         <ActivityBar />
-
-        {/* Separador vertical sutil entre ActivityBar y Sidebar */}
         <div className="w-px shrink-0" style={{ backgroundColor: 'var(--cristal-border-subtle)' }} />
 
-        {/* Group horizontal: Sidebar redimensionable + Editor */}
         <Group direction="horizontal">
-          <Panel
-            defaultSize="20%"
-            minSize="15%"
-            maxSize="40%"
-            order={1}
-          >
+          <Panel defaultSize="20%" minSize="15%" maxSize="40%" order={1}>
             <Sidebar />
           </Panel>
 
-          {/* Separator — franja visible y arrastrable con hover cian */}
           <Separator className="cristal-resize-handle" />
 
           <Panel order={2}>
-            {/* Group vertical: Editor arriba, Terminal abajo */}
-            <Group direction="vertical">
-              <Panel id="editor-main" order={1} minSize="20%">
+            {/* Contenedor flex vertical: Editor + Divider + Terminal */}
+            <div ref={containerRef} className="cristal-editor-terminal-split">
+              {/* Editor — ocupa todo el espacio restante */}
+              <div className="cristal-editor-terminal-split__editor">
                 <EditorArea onHasEditor={handleHasEditor} onActiveFileChange={handleActiveFileChange} />
-              </Panel>
+              </div>
 
+              {/* Divider arrastrable — solo visible cuando el terminal está abierto */}
               {showTerminal && (
-                <>
-                  <Separator className="cristal-resize-handle cristal-resize-handle--horizontal" />
-                  <Panel id="terminal-main" order={2} defaultSize="35%" minSize="10%" maxSize="80%">
-                    <TerminalPanel
-                      ref={terminalRef}
-                      cwd={state.rootPath ?? undefined}
-                      onHide={() => setShowTerminal(false)}
-                    />
-                  </Panel>
-                </>
+                <div
+                  className="cristal-editor-terminal-split__divider"
+                  onMouseDown={onDragStart}
+                />
               )}
-            </Group>
+
+              {/* Terminal — altura fija controlada por drag */}
+              {showTerminal && (
+                <div
+                  className="cristal-editor-terminal-split__terminal"
+                  style={{ height: terminalHeight }}
+                >
+                  <TerminalPanel
+                    ref={terminalRef}
+                    cwd={state.rootPath ?? undefined}
+                    onHide={() => setShowTerminal(false)}
+                  />
+                </div>
+              )}
+            </div>
           </Panel>
         </Group>
       </div>
 
-      {/* StatusBar — solo visible cuando hay editor activo */}
       {hasEditor && <StatusBar />}
 
-      {/* Toast de advertencia */}
       {toast && (
         <div className="cristal-toast">{toast}</div>
       )}
