@@ -705,7 +705,12 @@ ipcMain.handle(
   IPC_CHANNELS.TERMINAL_CREATE,
   async (_event, opts?: TerminalCreateOpts): Promise<string | null> => {
     if (!mainWindow) return null
-    return createTerminal(mainWindow, opts ?? {})
+    try {
+      return createTerminal(mainWindow, opts ?? {})
+    } catch (err) {
+      console.error('[IPC] Error al crear terminal:', err)
+      return null
+    }
   },
 )
 
