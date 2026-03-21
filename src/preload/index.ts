@@ -82,6 +82,22 @@ export interface CristalAPI {
   /** Escucha cuando el proceso termina. */
   onCodeExit: (callback: (exitCode: number) => void) => () => void
 
+  // ── Runtime Manager ─────────────────────────────────────────
+  /** Obtiene versiones de Node.js disponibles para instalar. */
+  runtimeListAvailable: () => Promise<{ version: string; lts: string | false; date: string }[]>
+  /** Obtiene versiones instaladas localmente. */
+  runtimeListInstalled: () => Promise<{ version: string; label: string; path: string }[]>
+  /** Descarga e instala una versión específica. */
+  runtimeInstall: (version: string) => Promise<void>
+  /** Desinstala una versión. */
+  runtimeUninstall: (version: string) => Promise<void>
+  /** Obtiene la versión activa actual. */
+  runtimeGetActive: () => Promise<string>
+  /** Establece la versión activa. */
+  runtimeSetActive: (version: string) => Promise<void>
+  /** Escucha progreso de descarga (0-100). */
+  onRuntimeInstallProgress: (callback: (pct: number) => void) => () => void
+
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
   /** Alterna maximizar / restaurar la ventana principal. */
@@ -212,6 +228,20 @@ contextBridge.exposeInMainWorld('cristalAPI', {
     const handler = (_event: Electron.IpcRendererEvent, exitCode: number) => callback(exitCode)
     ipcRenderer.on(IPC_CHANNELS.CODE_EXIT, handler)
     return () => { ipcRenderer.removeListener(IPC_CHANNELS.CODE_EXIT, handler) }
+  },
+
+  // ── Runtime Manager ─────────────────────────────────────────
+  runtimeListAvailable: () => ipcRenderer.invoke(IPC_CHANNELS.RUNTIME_LIST_AVAILABLE),
+  runtimeListInstalled: () => ipcRenderer.invoke(IPC_CHANNELS.RUNTIME_LIST_INSTALLED),
+  runtimeInstall: (version: string) => ipcRenderer.invoke(IPC_CHANNELS.RUNTIME_INSTALL, version),
+  runtimeUninstall: (version: string) => ipcRenderer.invoke(IPC_CHANNELS.RUNTIME_UNINSTALL, version),
+  runtimeGetActive: () => ipcRenderer.invoke(IPC_CHANNELS.RUNTIME_GET_ACTIVE),
+  runtimeSetActive: (version: string) => ipcRenderer.invoke(IPC_CHANNELS.RUNTIME_SET_ACTIVE, version),
+
+  onRuntimeInstallProgress: (callback: (pct: number) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, pct: number) => callback(pct)
+    ipcRenderer.on(IPC_CHANNELS.RUNTIME_INSTALL_PROGRESS, handler)
+    return () => { ipcRenderer.removeListener(IPC_CHANNELS.RUNTIME_INSTALL_PROGRESS, handler) }
   },
 
   windowMinimize: () => {
