@@ -871,3 +871,153 @@ body {
   color: var(--cristal-text-faint);
   font-style: italic;
 }
+
+/* ══════════════════════════════════════════════════════════
+   TERMINAL INTEGRADA — panel inferior con pestañas y PTY
+   ══════════════════════════════════════════════════════════ */
+
+/* Contenedor principal del panel de terminal */
+.cristal-terminal {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #1a1a1c;
+  overflow: hidden;
+}
+
+/* Toolbar superior — tabs + acciones */
+.cristal-terminal__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 8px;
+  background-color: var(--cristal-bg-header);
+  border-bottom: 1px solid var(--cristal-border-subtle);
+  user-select: none;
+  -webkit-app-region: no-drag;
+}
+
+/* Contenedor de pestañas */
+.cristal-terminal__tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  flex: 1;
+  min-width: 0;
+  scrollbar-width: none;
+}
+
+.cristal-terminal__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pestaña individual */
+.cristal-terminal__tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--cristal-text-muted);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.cristal-terminal__tab:hover {
+  background-color: var(--cristal-bg-hover);
+  color: var(--cristal-text-normal);
+}
+
+/* Pestaña activa */
+.cristal-terminal__tab--active {
+  background-color: rgba(0, 229, 255, 0.08);
+  color: var(--cristal-accent);
+}
+
+.cristal-terminal__tab--active:hover {
+  background-color: rgba(0, 229, 255, 0.12);
+}
+
+/* Label de la pestaña */
+.cristal-terminal__tab-label {
+  line-height: 1;
+}
+
+/* Botón cerrar pestaña */
+.cristal-terminal__tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.12s ease, background-color 0.12s ease;
+}
+
+.cristal-terminal__tab:hover .cristal-terminal__tab-close,
+.cristal-terminal__tab--active .cristal-terminal__tab-close {
+  opacity: 0.6;
+}
+
+.cristal-terminal__tab-close:hover {
+  opacity: 1 !important;
+  background-color: rgba(244, 71, 71, 0.15);
+  color: #f44747;
+}
+
+/* Acciones de la toolbar (nueva, cerrar todas, ocultar) */
+.cristal-terminal__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+}
+
+.cristal-terminal__action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--cristal-text-muted);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.cristal-terminal__action-btn:hover {
+  background-color: var(--cristal-bg-hover);
+  color: var(--cristal-text-normal);
+}
+
+/* Cuerpo del terminal — donde vive xterm */
+.cristal-terminal__body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Instancia individual de xterm */
+.cristal-terminal__instance {
+  width: 100%;
+  height: 100%;
+  padding: 4px 0 0 8px;
+}
+
+/* Resize handle horizontal (entre editor y terminal) */
+.cristal-resize-handle--horizontal {
+  height: 4px;
+  width: 100%;
+  cursor: row-resize;
+}
