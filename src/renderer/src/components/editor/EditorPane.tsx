@@ -211,8 +211,7 @@ export default function EditorPane({
   const tabBarRef = useRef<HTMLDivElement>(null)
   const activeTab = tabs.find((t) => t.id === activeTabId)
 
-  // Estado global de autocompletado AI y modal de generación
-  const [aiEnabled, setAiEnabled] = useState(true)
+  // Estado del modal de generación
   const [showPromptModal, setShowPromptModal] = useState(false)
 
   // Referencia para insertar código generado en la posición del cursor
@@ -289,9 +288,7 @@ export default function EditorPane({
       {activeTab && (
         <EditorToolbar
           language={activeTab.language}
-          aiEnabled={aiEnabled}
           onLanguageChange={(lang) => onLanguageChange(activeTab.id, lang)}
-          onAiToggle={() => setAiEnabled((v) => !v)}
           onRequestCode={() => setShowPromptModal(true)}
         />
       )}
@@ -303,7 +300,6 @@ export default function EditorPane({
             key={activeTab.id}
             language={activeTab.language}
             defaultValue={activeTab.content}
-            aiEnabled={aiEnabled}
             onChange={(v) => onContentChange(activeTab.id, v)}
             onSave={() => onSave(activeTab.id)}
             onInsertCodeRef={insertCodeRef}
