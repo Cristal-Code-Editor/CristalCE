@@ -100,7 +100,9 @@ export interface CristalAPI {
 
   // ── Terminal Integrada ─────────────────────────────────────────
   /** Crea una nueva sesión PTY. Retorna el ID de la terminal. */
-  terminalCreate: (opts?: { cwd?: string; cols?: number; rows?: number }) => Promise<string | null>
+  terminalCreate: (opts?: { cwd?: string; cols?: number; rows?: number; shellPath?: string; shellArgs?: string[] }) => Promise<string | null>
+  /** Abre un diálogo nativo para seleccionar un ejecutable de shell. Retorna la ruta o null. */
+  terminalSelectShell: () => Promise<string | null>
   /** Envía datos de teclado al PTY. */
   terminalWrite: (id: string, data: string) => void
   /** Redimensiona el PTY (cols × rows). */
@@ -259,8 +261,12 @@ contextBridge.exposeInMainWorld('cristalAPI', {
   },
 
   // ── Terminal Integrada ─────────────────────────────────────────
-  terminalCreate: (opts?: { cwd?: string; cols?: number; rows?: number }) => {
+  terminalCreate: (opts?: { cwd?: string; cols?: number; rows?: number; shellPath?: string; shellArgs?: string[] }) => {
     return ipcRenderer.invoke(IPC_CHANNELS.TERMINAL_CREATE, opts)
+  },
+
+  terminalSelectShell: (): Promise<string | null> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.TERMINAL_SELECT_SHELL)
   },
 
   terminalWrite: (id: string, data: string) => {
