@@ -1,13 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { CaretDown, Sparkle, Check, MagnifyingGlass } from '@phosphor-icons/react'
+import { CaretDown, Sparkle, Check, MagnifyingGlass, Play, Stop } from '@phosphor-icons/react'
 import { SUPPORTED_LANGUAGES } from '../../utils/languageMap'
 
 /* ── Props ─────────────────────────────────────────────── */
 
 interface EditorToolbarProps {
   language: string
+  runnable: boolean
+  running: boolean
   onLanguageChange: (langId: string) => void
   onRequestCode: () => void
+  onRun: () => void
+  onStop: () => void
 }
 
 /* ── Selector de lenguaje con búsqueda ─────────────────── */
@@ -138,11 +142,30 @@ function LanguageSelector({
 
 export default function EditorToolbar({
   language,
+  runnable,
+  running,
   onLanguageChange,
   onRequestCode,
+  onRun,
+  onStop,
 }: EditorToolbarProps) {
   return (
     <div className="cristal-editor-toolbar">
+      {/* Botón Ejecutar / Detener */}
+      {runnable && (
+        running ? (
+          <button type="button" onClick={onStop} className="cristal-run-btn cristal-run-btn--stop">
+            <Stop size={11} weight="fill" />
+            <span>Detener</span>
+          </button>
+        ) : (
+          <button type="button" onClick={onRun} className="cristal-run-btn">
+            <Play size={11} weight="fill" />
+            <span>Ejecutar</span>
+          </button>
+        )
+      )}
+
       {/* Generar código */}
       <button type="button" onClick={onRequestCode} className="cristal-gen-btn">
         <Sparkle size={11} weight="fill" />
