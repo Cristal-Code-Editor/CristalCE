@@ -1,4 +1,18 @@
-import { createContext, useContext, useReducer, useCallback, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useReducer, useCallback, useRef, useEffect, type ReactNode } from 'react'
+import { configureTypeScriptForWorkspace, disposeTypeScript } from '../services/typescriptIntelligence'
+
+/* ── Types ─────────────────────────────────────────────── */
+
+export interface SavedTabInfo {
+  filePath: string
+  isActive: boolean
+}
+
+export interface PersistedWorkspaceState {
+  openTabs: SavedTabInfo[]
+  sidebarWidth?: number
+  terminalOpen?: boolean
+}
 
 /* ── State ─────────────────────────────────────────────── */
 
@@ -7,20 +21,25 @@ interface WorkspaceState {
   rootPath: string | null
   /** Nombre de la carpeta raíz para mostrar en el sidebar. */
   rootName: string
+  /** Estado restaurado del workspace (tabs, layout). null si aún no se cargó. */
+  restoredState: PersistedWorkspaceState | null
 }
 
 type WorkspaceAction =
   | { type: 'SET_ROOT'; rootPath: string }
   | { type: 'CLEAR_ROOT' }
+  | { type: 'SET_RESTORED_STATE'; state: PersistedWorkspaceState }
 
 function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState {
   switch (action.type) {
     case 'SET_ROOT': {
       const name = action.rootPath.replace(/\\/g, '/').split('/').pop() ?? action.rootPath
-      return { rootPath: action.rootPath, rootName: name }
+      return { rootPath: action.rootPath, rootName: name, restoredState: null }
     }
     case 'CLEAR_ROOT':
-      return { rootPath: null, rootName: '' }
+      return { rootPath: null, rootName: '', restoredState: null }
+    case 'SET_RESTORED_STATE':
+      return { ...state, restoredState: action.state }
     default:
       return state
   }
@@ -37,6 +56,8 @@ interface WorkspaceContextValue {
   requestOpenFile: (filePath: string) => void
   /** EditorArea registra su callback para recibir peticiones de apertura. */
   registerFileHandler: (cb: FileOpenCallback) => () => void
+  /** Guarda el estado actual del workspace (tabs abiertos). */
+  saveWorkspaceState: (wsState: PersistedWorkspaceState) => Promise<void>
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)
@@ -50,12 +71,39 @@ export function useWorkspace(): WorkspaceContextValue {
 /* ── Provider ──────────────────────────────────────────── */
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(workspaceReducer, { rootPath: null, rootName: '' })
+  const [state, dispatch] = useReducer(workspaceReducer, { rootPath: null, rootName: '', restoredState: null })
   const fileHandlerRef = useRef<FileOpenCallback | null>(null)
 
   const openFolder = useCallback((rootPath: string) => {
     dispatch({ type: 'SET_ROOT', rootPath })
   }, [])
+
+  // Cuando cambia el rootPath: restaurar estado + configurar TS intelligence
+  useEffect(() => {
+    if (!state.rootPath) {
+      disposeTypeScript()
+      return
+    }
+
+    const rootPath = state.rootPath
+
+    // Registrar en recientes
+    window.cristalAPI.settingsAddRecent(rootPath)
+
+    // Restaurar estado del workspace
+    window.cristalAPI.workspaceStateGet(rootPath).then((saved) => {
+      if (saved && saved.openTabs?.length > 0) {
+        dispatch({ type: 'SET_RESTORED_STATE', state: saved })
+      }
+    })
+
+    // Configurar TypeScript intelligence
+    configureTypeScriptForWorkspace(rootPath)
+
+    return () => {
+      disposeTypeScript()
+    }
+  }, [state.rootPath])
 
   const requestOpenFile = useCallback((filePath: string) => {
     fileHandlerRef.current?.(filePath)
@@ -68,8 +116,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const saveWorkspaceState = useCallback(async (wsState: PersistedWorkspaceState) => {
+    if (!state.rootPath) return
+    await window.cristalAPI.workspaceStateSet(state.rootPath, wsState)
+  }, [state.rootPath])
+
   return (
-    <WorkspaceContext.Provider value={{ state, openFolder, requestOpenFile, registerFileHandler }}>
+    <WorkspaceContext.Provider value={{ state, openFolder, requestOpenFile, registerFileHandler, saveWorkspaceState }}>
       {children}
     </WorkspaceContext.Provider>
   )
