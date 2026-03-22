@@ -19,7 +19,7 @@ import {
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import { useWorkspace } from '../../context/WorkspaceContext'
 
-/* ── File icon lookup ──────────────────────────────────── */
+/* ── Iconos por extensión ──────────────────────────────── */
 
 const FILE_ICONS: Record<string, { Icon: PhosphorIcon; color: string }> = {
   ts: { Icon: FileTs, color: '#3178c6' },
@@ -40,7 +40,7 @@ function getFileIcon(name: string): { Icon: PhosphorIcon; color: string } {
   return FILE_ICONS[ext] ?? { Icon: FileCode, color: '#858585' }
 }
 
-/* ── DirEntry type (matches preload) ───────────────────── */
+/* ── Tipo DirEntry (coincide con preload) ────────────────────── */
 
 interface DirEntry {
   name: string
@@ -48,7 +48,7 @@ interface DirEntry {
   isDirectory: boolean
 }
 
-/* ── helpers ───────────────────────────────────────────── */
+/* ── Utilidades ──────────────────────────────────────────── */
 
 /** Extrae el nombre del directorio padre de una ruta. */
 function parentDir(p: string): string {
@@ -62,7 +62,7 @@ function childPath(dir: string, name: string): string {
   return dir.endsWith(sep) ? dir + name : dir + sep + name
 }
 
-/* ── Inline Input (create / rename) ────────────────────── */
+/* ── Input inline (crear / renombrar) ──────────────────────── */
 
 function InlineInput({
   type,
@@ -126,10 +126,10 @@ function InlineInput({
   )
 }
 
-/* ── Drag ghost data type ──────────────────────────────── */
+/* ── Tipo MIME del arrastre ───────────────────────────────── */
 const DRAG_MIME = 'application/x-cristal-tree-path'
 
-/* ── Tree Node (controlled expand state) ───────────────── */
+/* ── Nodo del árbol (estado de expansión) ──────────────────── */
 
 function TreeNode({
   entry,
@@ -208,12 +208,12 @@ function TreeNode({
         await window.cristalAPI.createFile(newPath)
       }
     } catch {
-      /* ignore — file might already exist */
+    /* ignorar — el archivo podría ya existir */
     }
     onCreationDone()
   }
 
-  /* ── Drag & Drop ── */
+  /* ── Arrastrar y soltar ── */
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData(DRAG_MIME, entry.path)
     e.dataTransfer.effectAllowed = 'move'
@@ -330,7 +330,7 @@ function TreeNode({
   )
 }
 
-/* ── Toolbar Button ────────────────────────────────────── */
+/* ── Botón de toolbar ────────────────────────────────────────────── */
 
 function ToolbarButton({
   icon: Icon,
@@ -397,7 +397,7 @@ export default function Sidebar() {
           setChildrenCache((prev) => new Map(prev).set(dirPath, result))
         }
       } catch {
-        /* ignore */
+        /* ignorar */
       }
     },
     [state.rootPath],
@@ -446,7 +446,7 @@ export default function Sidebar() {
     [requestOpenFile],
   )
 
-  /* ── Toolbar actions ── */
+  /* ── Acciones de toolbar ── */
 
   const handleNewFile = useCallback(() => {
     if (!state.rootPath) return
@@ -483,9 +483,9 @@ export default function Sidebar() {
     setRootCollapsed((prev) => !prev)
   }, [])
 
-  /* ── Context menu ── */
 
-  /* ── Context menu (nativo vía Electron Menu.popup) ── */
+
+  /* ── Menú contextual (nativo vía Electron Menu.popup) ── */
 
   const handleContextMenu = useCallback(
     async (e: React.MouseEvent, entry: DirEntry) => {
@@ -543,7 +543,7 @@ export default function Sidebar() {
             await window.cristalAPI.deletePath(entry.path)
             await refreshDir(parentDir(entry.path))
           } catch {
-            /* ignore */
+            /* ignorar */
           }
           break
       }
@@ -551,7 +551,7 @@ export default function Sidebar() {
     [requestOpenFile, handleToggle, refreshDir],
   )
 
-  /* ── Rename ── */
+  /* ── Renombrar ── */
 
   const handleRenameConfirm = useCallback(
     async (oldPath: string, newName: string) => {
@@ -560,7 +560,7 @@ export default function Sidebar() {
         await window.cristalAPI.renamePath(oldPath, newName)
         await refreshDir(parentDir(oldPath))
       } catch {
-        /* ignore */
+        /* ignorar */
       }
     },
     [refreshDir],
@@ -568,7 +568,7 @@ export default function Sidebar() {
 
   const handleRenameCancel = useCallback(() => setRenamingPath(null), [])
 
-  /* ── Drag & Drop (move) ── */
+  /* ── Arrastrar y soltar (mover) ── */
 
   const handleDrop = useCallback(
     async (sourcePath: string, destDir: string) => {
@@ -580,13 +580,13 @@ export default function Sidebar() {
         await refreshDir(parentDir(sourcePath))
         await refreshDir(destDir)
       } catch {
-        /* ignore */
+        /* ignorar */
       }
     },
     [refreshDir],
   )
 
-  /* ── Drop on root area (tree blank space) ── */
+  /* ── Soltar en área raíz (espacio vacío del árbol) ── */
 
   const handleRootDragOver = (e: React.DragEvent) => {
     if (!state.rootPath) return
@@ -603,7 +603,7 @@ export default function Sidebar() {
     }
   }
 
-  /* ── Root context menu ── */
+  /* ── Menú contextual en la raíz ── */
 
   const handleRootContext = useCallback(
     (e: React.MouseEvent) => {
@@ -694,7 +694,7 @@ export default function Sidebar() {
                           await window.cristalAPI.createFile(newPath)
                         }
                       } catch {
-                        /* ignore */
+                        /* ignorar */
                       }
                       handleCreationDone()
                     }}
