@@ -98,7 +98,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     })
 
     // Configurar inteligencia TypeScript
-    configureTypeScriptForWorkspace(rootPath)
+    configureTypeScriptForWorkspace(rootPath).catch((err) =>
+      console.error('[WorkspaceContext] Error configurando TS Intelligence:', err)
+    )
 
     // Iniciar observador del filesystem
     window.cristalAPI.fsWatchStart(rootPath)

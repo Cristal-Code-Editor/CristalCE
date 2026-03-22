@@ -15,6 +15,11 @@ import * as monaco from 'monaco-editor'
 // Monaco 0.55+ expone TS en `monaco.typescript` en vez de `monaco.languages.typescript`
 const ts = (monaco as any).typescript as typeof import('monaco-editor').typescript
 
+// Validar al cargar el módulo que la referencia es válida
+if (!ts || !ts.typescriptDefaults) {
+  console.error('[TS Intelligence] FATAL: monaco.typescript no disponible. Verificar versión de Monaco.')
+}
+
 /** Disposables activos para limpiar al cambiar de workspace */
 let activeDisposables: monaco.IDisposable[] = []
 
@@ -37,6 +42,7 @@ let fsWatchCleanup: (() => void) | null = null
  */
 function mapCompilerOptions(
   raw: Record<string, unknown>,
+  rootPath: string
 ): import('monaco-editor').typescript.CompilerOptions {
   const targetMap: Record<string, number> = {
     es3: ts.ScriptTarget.ES3,
@@ -62,7 +68,7 @@ function mapCompilerOptions(
 
   const jsxMap: Record<string, number> = {
     none: ts.JsxEmit.None,
-    preserve: ts.JsxEmit.Preserve,
+    preserve: ts.JsxEmit.ReactJSX, // Monaco handles JSX better when forced to ReactJSX to avoid React missing errors
     react: ts.JsxEmit.React,
     'react-jsx': ts.JsxEmit.ReactJSX,
     'react-jsxdev': ts.JsxEmit.ReactJSXDev,
@@ -108,7 +114,8 @@ function mapCompilerOptions(
     isolatedModules: raw.isolatedModules === true,
     noEmit: true,
     skipLibCheck: true,
-    baseUrl: typeof raw.baseUrl === 'string' ? raw.baseUrl : './',
+    baseUrl: toFileUri(rootPath), // Usar URI absoluta del workspace
+    paths: raw.paths as Record<string, string[]> | undefined,
     allowNonTsExtensions: true,
   }
 }
@@ -190,30 +197,43 @@ async function handleFsWatchEvent(event: { eventType: 'rename' | 'change'; fileP
 /**
  * Configura la inteligencia TypeScript de Monaco para un workspace.
  * Llamar cada vez que se abra o cambie de workspace.
+ *
+ * Monaco's TS worker runs in a web worker without filesystem access.
+ * Module resolution relies on extraLibs registered via addExtraLib(content, uri).
+ * The TS worker's fileExists() checks if a path exists as an extraLib key.
+ * TypeScript's Node module resolution walks up directories from the source file,
+ * constructing paths like file:///C:/.../node_modules/@types/react/index.d.ts
+ * and checking if they exist — which matches our extraLib keys.
  */
 export async function configureTypeScriptForWorkspace(rootPath: string): Promise<void> {
   // Limpiar configuración anterior
   disposeTypeScript()
 
+  if (!ts || !ts.typescriptDefaults) {
+    console.error('[TS Intelligence] monaco.typescript no está disponible, abortando configuración')
+    return
+  }
+
   const tsDefaults = ts.typescriptDefaults
   const jsDefaults = ts.javascriptDefaults
 
-  // 1. Obtener tsconfig.json del proyecto
-  let config: { compilerOptions: Record<string, unknown>; fileNames: string[] }
-  try {
-    config = await window.cristalAPI.tsGetConfig(rootPath)
-  } catch (err) {
-    console.error('[TS Intelligence] Error al obtener tsconfig:', err)
-    config = { compilerOptions: {}, fileNames: [] }
+  // ── Fase 1: Aplicar defaults inmediatos ANTES de cualquier IPC async ──
+  const immediateOptions: import('monaco-editor').typescript.CompilerOptions = {
+    target: ts.ScriptTarget.ESNext,
+    module: ts.ModuleKind.ESNext,
+    jsx: ts.JsxEmit.ReactJSX,
+    moduleResolution: ts.ModuleResolutionKind.NodeJs,
+    esModuleInterop: true,
+    allowSyntheticDefaultImports: true,
+    strict: true,
+    noEmit: true,
+    skipLibCheck: true,
+    allowNonTsExtensions: true,
+    allowJs: true,
   }
+  tsDefaults.setCompilerOptions(immediateOptions)
+  jsDefaults.setCompilerOptions(immediateOptions)
 
-  const compilerOptions = mapCompilerOptions(config.compilerOptions)
-
-  // Aplicar compilerOptions a ambos workers (TS y JS)
-  tsDefaults.setCompilerOptions(compilerOptions)
-  jsDefaults.setCompilerOptions(compilerOptions)
-
-  // Configurar diagnósticos
   tsDefaults.setDiagnosticsOptions({
     noSemanticValidation: false,
     noSyntaxValidation: false,
@@ -225,11 +245,26 @@ export async function configureTypeScriptForWorkspace(rootPath: string): Promise
     noSuggestionDiagnostics: false,
   })
 
-  // Eager model sync para que el worker conozca todos los modelos abiertos
   tsDefaults.setEagerModelSync(true)
   jsDefaults.setEagerModelSync(true)
 
-  // 2. Cargar type definitions de node_modules (estáticas, no cambian en runtime)
+  // ── Fase 2: Leer tsconfig.json del proyecto (async) ──
+  let config: { compilerOptions: Record<string, unknown>; fileNames: string[] }
+  try {
+    config = await window.cristalAPI.tsGetConfig(rootPath)
+    console.info('[TS Intelligence] tsconfig cargado:', Object.keys(config.compilerOptions))
+  } catch (err) {
+    console.error('[TS Intelligence] Error al obtener tsconfig:', err)
+    config = { compilerOptions: {}, fileNames: [] }
+  }
+
+  if (Object.keys(config.compilerOptions).length > 0) {
+    const compilerOptions = mapCompilerOptions(config.compilerOptions, rootPath)
+    tsDefaults.setCompilerOptions(compilerOptions)
+    jsDefaults.setCompilerOptions(compilerOptions)
+  }
+
+  // ── Fase 3: Cargar type definitions de node_modules ──
   try {
     const typeLibs = await window.cristalAPI.tsGetTypeLibs(rootPath)
     console.info(`[TS Intelligence] ${typeLibs.length} type definitions cargadas`)
@@ -242,8 +277,7 @@ export async function configureTypeScriptForWorkspace(rootPath: string): Promise
     console.error('[TS Intelligence] Error al cargar type definitions:', err)
   }
 
-  // 3. Cargar fuentes del proyecto para visibilidad entre archivos
-  //    Usa sourceExtraLibs (con tracking) para poder actualizar individualmente
+  // ── Fase 4: Cargar fuentes del proyecto para visibilidad entre archivos ──
   try {
     const fileNames = config.fileNames ?? []
     const sources = await window.cristalAPI.tsGetProjectSources(rootPath, fileNames)
@@ -255,9 +289,10 @@ export async function configureTypeScriptForWorkspace(rootPath: string): Promise
     console.error('[TS Intelligence] Error al cargar fuentes del proyecto:', err)
   }
 
-  // 4. Suscribirse al file watcher para mantener extraLibs sincronizados
-  //    Cuando un archivo TS/JS cambia en disco, se actualiza su extraLib
+  // ── Fase 5: Suscribirse al file watcher ──
   fsWatchCleanup = window.cristalAPI.onFsWatchEvent(handleFsWatchEvent)
+
+  console.info('[TS Intelligence] Configuración completa para:', rootPath)
 }
 
 /**
