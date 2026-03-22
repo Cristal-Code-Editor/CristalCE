@@ -376,6 +376,22 @@ export default function Sidebar() {
     loadRoot()
   }, [state.rootPath])
 
+  // Refrescar explorador ante cambios externos del filesystem
+  useEffect(() => {
+    if (!state.rootPath) return
+    const unsub = window.cristalAPI.onFsWatchEvent((event) => {
+      if (event.eventType === 'rename') {
+        // Estructura cambió (archivo/carpeta creado, eliminado o renombrado)
+        if (event.parentDir === state.rootPath) {
+          loadRoot()
+        } else {
+          refreshDir(event.parentDir)
+        }
+      }
+    })
+    return unsub
+  }, [state.rootPath, loadRoot, refreshDir])
+
   const loadRoot = useCallback(async () => {
     if (!state.rootPath) return
     try {
