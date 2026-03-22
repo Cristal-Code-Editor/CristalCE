@@ -18,6 +18,7 @@ type Action =
   | { type: 'OPEN_FILE'; filePath: string; content: string }
   | { type: 'NEW_FILE' }
   | { type: 'CHANGE_LANGUAGE'; id: string; language: string }
+  | { type: 'EXTERNAL_UPDATE'; filePath: string; content: string }
 
 let nextId = 1
 
@@ -109,6 +110,21 @@ function reducer(state: EditorState, action: Action): EditorState {
         ),
       }
 
+    case 'EXTERNAL_UPDATE': {
+      const target = state.tabs.find((t) => t.filePath === action.filePath)
+      if (!target) return state
+      // Solo actualizar si el contenido no tiene cambios sin guardar
+      if (target.content !== target.savedContent) return state
+      return {
+        ...state,
+        tabs: state.tabs.map((t) =>
+          t.filePath === action.filePath
+            ? { ...t, content: action.content, savedContent: action.content }
+            : t,
+        ),
+      }
+    }
+
     default:
       return state
   }
@@ -176,6 +192,24 @@ export default function EditorArea({ onHasEditor, onActiveFileChange }: { onHasE
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
   }, [state.tabs, state.activeTabId, wsState.rootPath, saveWorkspaceState])
+
+  // ── Recargar archivos abiertos ante cambios externos ──
+  useEffect(() => {
+    const unsub = window.cristalAPI.onFsWatchEvent(async (event) => {
+      if (event.eventType !== 'change') return
+      const tab = state.tabs.find((t) => t.filePath === event.filePath)
+      if (!tab) return
+      try {
+        const content = await window.cristalAPI.readFile(event.filePath)
+        if (content !== tab.savedContent) {
+          dispatch({ type: 'EXTERNAL_UPDATE', filePath: event.filePath, content })
+        }
+      } catch {
+        /* archivo eliminado — no hacer nada */
+      }
+    })
+    return unsub
+  }, [state.tabs])
 
   // ── Registrar handler para apertura de archivos desde Sidebar ──
   const openFileFromPath = useCallback(async (filePath: string) => {
