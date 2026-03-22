@@ -740,6 +740,74 @@ ipcMain.handle(IPC_CHANNELS.TERMINAL_SELECT_SHELL, async (): Promise<string | nu
   return result.filePaths[0]
 })
 
+// ─── IPC: Settings & Persistence ─────────────────────────────────────────────
+
+import {
+  getGlobalSettings,
+  setGlobalSettings,
+  addRecentWorkspace,
+  getWorkspaceState,
+  setWorkspaceState,
+  type WorkspaceState,
+} from './settingsManager'
+
+ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, async () => {
+  return getGlobalSettings()
+})
+
+ipcMain.handle(
+  IPC_CHANNELS.SETTINGS_SET,
+  async (_event, patch: Record<string, unknown>) => {
+    return setGlobalSettings(patch)
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.WORKSPACE_STATE_GET,
+  async (_event, rootPath: string) => {
+    return getWorkspaceState(rootPath)
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.WORKSPACE_STATE_SET,
+  async (_event, rootPath: string, state: WorkspaceState) => {
+    await setWorkspaceState(rootPath, state)
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.SETTINGS_ADD_RECENT,
+  async (_event, rootPath: string) => {
+    await addRecentWorkspace(rootPath)
+  },
+)
+
+// ─── IPC: TypeScript Intelligence ────────────────────────────────────────────
+
+import { readTsConfig, scanTypeLibs, readProjectSources } from './tsConfigService'
+
+ipcMain.handle(
+  IPC_CHANNELS.TS_GET_CONFIG,
+  async (_event, rootPath: string) => {
+    return readTsConfig(rootPath)
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.TS_GET_TYPE_LIBS,
+  async (_event, rootPath: string) => {
+    return scanTypeLibs(rootPath)
+  },
+)
+
+ipcMain.handle(
+  IPC_CHANNELS.TS_GET_PROJECT_SOURCES,
+  async (_event, rootPath: string, fileNames: string[]) => {
+    return readProjectSources(rootPath, fileNames)
+  },
+)
+
 app.whenReady().then(() => {
   createWindow()
 
