@@ -1,7 +1,7 @@
 /**
- * Configure Monaco Editor to load from local node_modules instead of CDN.
- * This eliminates CSP issues and makes the editor work offline.
- * MUST be imported before any Monaco component renders.
+ * Configura Monaco Editor para cargar desde node_modules local en vez de CDN.
+ * Elimina problemas de CSP y permite que el editor funcione sin conexión.
+ * DEBE importarse antes de que cualquier componente Monaco se renderice.
  */
 import * as monaco from 'monaco-editor'
 import { loader } from '@monaco-editor/react'
