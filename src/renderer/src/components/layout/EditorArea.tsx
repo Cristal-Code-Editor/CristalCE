@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useEffect } from 'react'
+import { useReducer, useCallback, useEffect, useRef } from 'react'
 import EditorPane, { type TabData } from '../editor/EditorPane'
 import { detectLanguage, fileNameFromPath, languageToExtension } from '../../utils/languageMap'
 import { useWorkspace } from '../../context/WorkspaceContext'
@@ -123,7 +123,9 @@ const INITIAL_STATE: EditorState = {
 
 export default function EditorArea({ onHasEditor, onActiveFileChange }: { onHasEditor?: (has: boolean) => void; onActiveFileChange?: (filePath: string | null) => void }) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
-  const { registerFileHandler } = useWorkspace()
+  const { registerFileHandler, state: wsState, saveWorkspaceState } = useWorkspace()
+  const restoredRef = useRef(false)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Notificar al padre si hay tabs abiertos
   useEffect(() => {
@@ -135,6 +137,45 @@ export default function EditorArea({ onHasEditor, onActiveFileChange }: { onHasE
     const tab = state.tabs.find((t) => t.id === state.activeTabId)
     onActiveFileChange?.(tab?.filePath ?? null)
   }, [state.activeTabId, state.tabs, onActiveFileChange])
+
+  // ── Restaurar tabs desde el estado persistido del workspace ──
+  useEffect(() => {
+    if (restoredRef.current) return
+    if (!wsState.restoredState || wsState.restoredState.openTabs.length === 0) return
+    restoredRef.current = true
+
+    const restoreTabs = async (): Promise<void> => {
+      for (const saved of wsState.restoredState!.openTabs) {
+        try {
+          const content = await window.cristalAPI.readFile(saved.filePath)
+          dispatch({ type: 'OPEN_FILE', filePath: saved.filePath, content })
+        } catch {
+          // Archivo eliminado o movido — skip
+        }
+      }
+    }
+    restoreTabs()
+  }, [wsState.restoredState])
+
+  // ── Auto-guardar estado del workspace (debounced 2s) ──
+  useEffect(() => {
+    if (!wsState.rootPath) return
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      const openTabs = state.tabs
+        .filter((t) => t.filePath !== null)
+        .map((t) => ({
+          filePath: t.filePath!,
+          isActive: t.id === state.activeTabId,
+        }))
+      saveWorkspaceState({ openTabs })
+    }, 2000)
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [state.tabs, state.activeTabId, wsState.rootPath, saveWorkspaceState])
 
   // ── Registrar handler para apertura de archivos desde Sidebar ──
   const openFileFromPath = useCallback(async (filePath: string) => {
