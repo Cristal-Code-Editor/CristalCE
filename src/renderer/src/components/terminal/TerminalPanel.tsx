@@ -82,7 +82,7 @@ const TerminalPanel = forwardRef<TerminalPanelHandle, TerminalPanelProps>(functi
     return () => document.removeEventListener('mousedown', handler)
   }, [showShellPicker])
 
-  /* ── Focus input de rename ─────────────────────────── */
+  /* ── Enfocar input de renombrado ────────────────────── */
   useEffect(() => {
     if (editingTabId) renameInputRef.current?.focus()
   }, [editingTabId])
@@ -154,7 +154,7 @@ const TerminalPanel = forwardRef<TerminalPanelHandle, TerminalPanelProps>(functi
     }
   }, [createWithCustomPath])
 
-  /* ── Imperative handle → writeToActive ─────────────── */
+  /* ── Handle imperativo → writeToActive ─────────────── */
   useImperativeHandle(ref, () => ({
     writeToActive: async (data: string) => {
       let target = activeId
