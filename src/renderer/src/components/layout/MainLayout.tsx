@@ -44,7 +44,7 @@ export default function MainLayout() {
     setTimeout(() => setToast(null), 3000)
   }, [])
 
-  /* ── Drag resize del separator terminal ──────────────── */
+  /* ── Redimensionado del separador del terminal ───────────── */
   const onDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     dragging.current = true
