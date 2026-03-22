@@ -100,8 +100,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     // Configurar TypeScript intelligence
     configureTypeScriptForWorkspace(rootPath)
 
+    // Iniciar watcher del filesystem
+    window.cristalAPI.fsWatchStart(rootPath)
+
     return () => {
       disposeTypeScript()
+      window.cristalAPI.fsWatchStop()
     }
   }, [state.rootPath])
 
