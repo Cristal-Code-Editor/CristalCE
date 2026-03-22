@@ -9,7 +9,7 @@ import OutputPanel, { type OutputLine } from './OutputPanel'
 /** Lenguajes que se pueden ejecutar */
 const RUNNABLE = new Set(['javascript', 'typescript'])
 
-/* ── Types ─────────────────────────────────────────────── */
+/* ── Tipos ───────────────────────────────────────────── */
 
 export interface TabData {
   id: string
@@ -31,7 +31,7 @@ interface EditorPaneProps {
   onLanguageChange: (id: string, language: string) => void
 }
 
-/* ── File icon lookup ──────────────────────────────────── */
+/* ── Iconos según extensión de archivo ──────────────────── */
 
 const ICON_MAP: Record<string, { Icon: PhosphorIcon; color: string }> = {
   ts: { Icon: FileTs, color: '#3178c6' },
@@ -56,7 +56,7 @@ function fileIcon(name: string) {
   return ICON_MAP[ext] ?? { Icon: FileCode, color: '#858585' }
 }
 
-/* ── Single Tab ────────────────────────────────────────── */
+/* ── Pestaña individual ──────────────────────────────── */
 
 function Tab({
   tab,
@@ -145,7 +145,7 @@ function Tab({
   )
 }
 
-/* ── Welcome ───────────────────────────────────────────── */
+/* ── Pantalla de bienvenida ───────────────────────────── */
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
@@ -253,14 +253,14 @@ export default function EditorPane({
     window.cristalAPI.stopCode()
   }, [])
 
-  // Scroll active tab into view
+  // Desplazar la pestaña activa al área visible
   useEffect(() => {
     if (!tabBarRef.current || !activeTabId) return
     const el = tabBarRef.current.querySelector<HTMLElement>(`[aria-selected="true"]`)
     el?.scrollIntoView({ behavior: 'smooth', inline: 'nearest' })
   }, [activeTabId])
 
-  // Horizontal scroll with mouse wheel on tab bar
+  // Scroll horizontal con rueda del mouse en la barra de pestañas
   useEffect(() => {
     const el = tabBarRef.current
     if (!el) return
@@ -300,7 +300,7 @@ export default function EditorPane({
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden" style={{ backgroundColor: '#1e1e1e' }}>
-      {/* Tab bar */}
+      {/* Barra de pestañas */}
       <div
         ref={tabBarRef}
         className="cristal-tabs flex shrink-0 items-stretch overflow-x-auto"
@@ -333,9 +333,9 @@ export default function EditorPane({
         />
       )}
 
-      {/* Editor + Output split */}
+      {/* División Editor + Salida */}
       <div className="flex min-h-0 flex-1 flex-col">
-        {/* Editor area */}
+        {/* Área del editor */}
         <div className="relative min-h-0 flex-1">
           {activeTab && (
             <CodeEditor
