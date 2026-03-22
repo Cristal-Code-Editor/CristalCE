@@ -119,12 +119,12 @@ export async function scanTypeLibs(rootPath: string): Promise<TypeLib[]> {
             const filePath = `file:///node_modules/@types/${pkg}/index.d.ts`
             libs.push({ filePath, content })
           } catch {
-            // Skip unreadable files
+            // Archivo no legible, omitir
           }
         }
       }
     } catch {
-      // @types dir not readable
+      // Directorio @types no legible
     }
   }
 
@@ -134,7 +134,7 @@ export async function scanTypeLibs(rootPath: string): Promise<TypeLib[]> {
     for (const pkg of topLevel) {
       if (pkg.startsWith('.') || pkg === '@types') continue
 
-      // Scoped packages (@scope/name)
+      // Paquetes con scope (@scope/nombre)
       if (pkg.startsWith('@')) {
         const scopeDir = join(nodeModules, pkg)
         try {
@@ -150,14 +150,14 @@ export async function scanTypeLibs(rootPath: string): Promise<TypeLib[]> {
       }
     }
   } catch {
-    // node_modules not readable
+    // node_modules no legible
   }
 
   return libs
 }
 
 async function tryLoadPkgTypes(pkgDir: string, pkgName: string, libs: TypeLib[]): Promise<void> {
-  // Skip si ya tenemos @types/ para este paquete
+  // Omitir si ya tenemos @types/ para este paquete
   if (libs.some((l) => l.filePath.includes(`@types/${pkgName}/`))) return
 
   const pkgJsonPath = join(pkgDir, 'package.json')
@@ -176,11 +176,11 @@ async function tryLoadPkgTypes(pkgDir: string, pkgName: string, libs: TypeLib[])
     const filePath = `file:///node_modules/${pkgName}/${typesField}`
     libs.push({ filePath, content })
   } catch {
-    // Skip
+    // Omitir
   }
 }
 
-/* ── Leer archivos fuente del proyecto para cross-file awareness ── */
+/* ── Leer archivos fuente del proyecto para visibilidad entre archivos ── */
 
 export async function readProjectSources(
   rootPath: string,
@@ -196,7 +196,7 @@ export async function readProjectSources(
       const filePath = `file:///${rel}`
       sources.push({ filePath, content })
     } catch {
-      // Skip unreadable
+      // Omitir archivos no legibles
     }
   }
 
