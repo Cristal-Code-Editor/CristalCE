@@ -293,8 +293,6 @@ ipcMain.handle(
     const entries = await readdir(dirPath, { withFileTypes: true })
     const result: DirEntry[] = []
     for (const entry of entries) {
-      // Ocultar archivos/carpetas ocultas (dotfiles) y node_modules
-      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue
       result.push({
         name: entry.name,
         path: join(dirPath, entry.name),
@@ -790,21 +788,36 @@ import { readTsConfig, scanTypeLibs, readProjectSources } from './tsConfigServic
 ipcMain.handle(
   IPC_CHANNELS.TS_GET_CONFIG,
   async (_event, rootPath: string) => {
-    return readTsConfig(rootPath)
+    try {
+      return await readTsConfig(rootPath)
+    } catch (err) {
+      console.error('[TS IPC] Error en TS_GET_CONFIG:', err)
+      return { compilerOptions: {}, fileNames: [] }
+    }
   },
 )
 
 ipcMain.handle(
   IPC_CHANNELS.TS_GET_TYPE_LIBS,
   async (_event, rootPath: string) => {
-    return scanTypeLibs(rootPath)
+    try {
+      return await scanTypeLibs(rootPath)
+    } catch (err) {
+      console.error('[TS IPC] Error en TS_GET_TYPE_LIBS:', err)
+      return []
+    }
   },
 )
 
 ipcMain.handle(
   IPC_CHANNELS.TS_GET_PROJECT_SOURCES,
   async (_event, rootPath: string, fileNames: string[]) => {
-    return readProjectSources(rootPath, fileNames)
+    try {
+      return await readProjectSources(rootPath, fileNames ?? [])
+    } catch (err) {
+      console.error('[TS IPC] Error en TS_GET_PROJECT_SOURCES:', err)
+      return []
+    }
   },
 )
 
