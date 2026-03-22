@@ -3,7 +3,7 @@ import EditorPane, { type TabData } from '../editor/EditorPane'
 import { detectLanguage, fileNameFromPath, languageToExtension } from '../../utils/languageMap'
 import { useWorkspace } from '../../context/WorkspaceContext'
 
-/* ── State ─────────────────────────────────────────────── */
+/* ── Estado ──────────────────────────────────────────── */
 
 interface EditorState {
   tabs: TabData[]
@@ -135,7 +135,7 @@ const INITIAL_STATE: EditorState = {
   activeTabId: null,
 }
 
-/* ── Component ─────────────────────────────────────────── */
+/* ── Componente ───────────────────────────────────────── */
 
 export default function EditorArea({ onHasEditor, onActiveFileChange }: { onHasEditor?: (has: boolean) => void; onActiveFileChange?: (filePath: string | null) => void }) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
@@ -166,7 +166,7 @@ export default function EditorArea({ onHasEditor, onActiveFileChange }: { onHasE
           const content = await window.cristalAPI.readFile(saved.filePath)
           dispatch({ type: 'OPEN_FILE', filePath: saved.filePath, content })
         } catch {
-          // Archivo eliminado o movido — skip
+          // Archivo eliminado o movido — omitir
         }
       }
     }
@@ -260,9 +260,9 @@ export default function EditorArea({ onHasEditor, onActiveFileChange }: { onHasE
       unsubFile()
       unsubMenu()
     }
-  }) // Re-subscribe on every render to capture current state.activeTabId
+  }) // Re-suscribir en cada render para capturar el state.activeTabId actual
 
-  // ── Save helpers ──────────────────────────────────────
+  // ── Funciones auxiliares de guardado ──────────────────────────────
   const saveTab = useCallback(async (tab: TabData) => {
     if (tab.filePath) {
       await window.cristalAPI.writeFile(tab.filePath, tab.content)
@@ -301,7 +301,7 @@ export default function EditorArea({ onHasEditor, onActiveFileChange }: { onHasE
     }
   }, [state.tabs, state.activeTabId])
 
-  // ── Callbacks for EditorPane ──────────────────────────
+  // ── Callbacks para EditorPane ──────────────────────────
   const handleTabSelect = useCallback((id: string) => dispatch({ type: 'SELECT_TAB', id }), [])
   const handleTabClose = useCallback((id: string) => dispatch({ type: 'CLOSE_TAB', id }), [])
   const handleContentChange = useCallback(
