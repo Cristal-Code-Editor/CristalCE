@@ -53,7 +53,7 @@ body {
   font-size: 13px;
 }
 
-/* Resize handle entre Sidebar y Editor */
+/* Control de redimensionado entre Sidebar y Editor */
 .cristal-resize-handle {
   width: 4px;
   flex-shrink: 0;
@@ -67,7 +67,7 @@ body {
   background-color: var(--cristal-accent);
 }
 
-/* Tab bar — hide scrollbar but allow horizontal scroll */
+/* Barra de pestañas — ocultar scrollbar pero permitir scroll horizontal */
 .cristal-tabs {
   scrollbar-width: none; /* Firefox */
 }
@@ -100,7 +100,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Editor toolbar — barra premium, limpia y funcional
+   Toolbar del editor — barra premium, limpia y funcional
    ═══════════════════════════════════════════════════════════ */
 
 .cristal-editor-toolbar {
@@ -271,7 +271,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Prompt AI — command palette style
+   Prompt IA — estilo paleta de comandos
    ═══════════════════════════════════════════════════════════ */
 
 .cristal-prompt-backdrop {
@@ -395,7 +395,7 @@ body {
   background-color: rgba(255, 255, 255, 0.015);
 }
 
-/* Hint de atajo */
+/* Indicación de atajo */
 .cristal-prompt__hint {
   display: flex;
   align-items: center;
@@ -464,7 +464,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Output panel — terminal de resultados
+   Panel de salida — terminal de resultados
    ═══════════════════════════════════════════════════════════ */
 
 .cristal-output {
@@ -594,7 +594,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Runtime Manager Modal
+   Modal del Gestor de Runtimes
    ═══════════════════════════════════════════════════════════ */
 
 .cristal-runtime {
@@ -721,7 +721,7 @@ body {
   border-radius: 4px;
 }
 
-/* Item de versión */
+/* Elemento de versión */
 .cristal-runtime__item {
   display: flex;
   align-items: center;
@@ -856,7 +856,7 @@ body {
   text-align: right;
 }
 
-/* Loading y vacío */
+/* Carga y vacío */
 .cristal-runtime__loading {
   display: flex;
   justify-content: center;
@@ -1046,7 +1046,7 @@ body {
   gap: 2px;
 }
 
-/* ── Shell picker dropdown ───────────────────────────────── */
+/* ── Selector de shell (dropdown) ────────────────────────── */
 
 .cristal-terminal__shell-picker-container {
   position: relative;
@@ -1192,7 +1192,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Editor + Terminal split — layout flex vertical
+   División Editor + Terminal — layout flex vertical
    ═══════════════════════════════════════════════════════════ */
 
 .cristal-editor-terminal-split {
