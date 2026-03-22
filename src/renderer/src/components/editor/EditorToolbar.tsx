@@ -46,7 +46,7 @@ function LanguageSelector({
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  // Enfocar input al abrir y scroll al item activo
+  // Enfocar el campo al abrir y desplazar al elemento activo
   useEffect(() => {
     if (!open) return
     inputRef.current?.focus()
