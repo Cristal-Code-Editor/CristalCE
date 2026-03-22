@@ -25,7 +25,7 @@ export const IPC_CHANNELS = {
   /** Acción genérica del menú nativo → Renderer */
   MENU_ACTION: 'MENU_ACTION',
 
-  // ── File System Operations (invoke/handle) ──────────────
+  // ── Operaciones del Sistema de Archivos (invoke/handle) ────────
   /** Renderer → Main: leer contenido de un archivo */
   FS_READ_FILE: 'FS_READ_FILE',
   /** Renderer → Main: escribir contenido a un archivo */
@@ -53,11 +53,11 @@ export const IPC_CHANNELS = {
   /** Renderer → Main: abrir diálogo nativo de selección de carpeta */
   DIALOG_OPEN_FOLDER: 'DIALOG_OPEN_FOLDER',
 
-  // ── AI Completions (invoke/handle) ──────────────────────
+  // ── Autocompletado IA (invoke/handle) ──────────────────────
   /** Renderer → Main: solicitar autocompletado de código vía proxy AI */
   AI_COMPLETION: 'AI_COMPLETION',
 
-  // ── Code Execution (invoke/handle + send) ───────────────
+  // ── Ejecución de Código (invoke/handle + send) ─────────────
   /** Renderer → Main: ejecutar código en un proceso hijo */
   RUN_CODE: 'RUN_CODE',
   /** Renderer → Main: matar el proceso hijo activo */
@@ -69,7 +69,7 @@ export const IPC_CHANNELS = {
   /** Main → Renderer: el proceso terminó (exitCode) */
   CODE_EXIT: 'CODE_EXIT',
 
-  // ── Runtime Manager (invoke/handle + send) ──────────────
+  // ── Gestor de Runtimes (invoke/handle + send) ──────────────
   /** Renderer → Main: obtener versiones de Node.js disponibles para descarga */
   RUNTIME_LIST_AVAILABLE: 'RUNTIME_LIST_AVAILABLE',
   /** Renderer → Main: obtener versiones instaladas localmente */
@@ -101,7 +101,7 @@ export const IPC_CHANNELS = {
   /** Renderer → Main: abrir diálogo para seleccionar ejecutable de shell */
   TERMINAL_SELECT_SHELL: 'TERMINAL_SELECT_SHELL',
 
-  // ── Settings & Persistence (invoke/handle) ──────────────
+  // ── Configuración y Persistencia (invoke/handle) ──────────
   /** Renderer → Main: obtener configuración global */
   SETTINGS_GET: 'SETTINGS_GET',
   /** Renderer → Main: actualizar configuración global (merge parcial) */
@@ -113,15 +113,15 @@ export const IPC_CHANNELS = {
   /** Renderer → Main: registrar un workspace en la lista de recientes */
   SETTINGS_ADD_RECENT: 'SETTINGS_ADD_RECENT',
 
-  // ── TypeScript Intelligence (invoke/handle) ─────────────
+  // ── Inteligencia TypeScript (invoke/handle) ─────────────
   /** Renderer → Main: obtener tsconfig.json + lista de archivos TS del proyecto */
   TS_GET_CONFIG: 'TS_GET_CONFIG',
   /** Renderer → Main: obtener type definitions de node_modules */
   TS_GET_TYPE_LIBS: 'TS_GET_TYPE_LIBS',
-  /** Renderer → Main: obtener fuentes del proyecto para cross-file awareness */
+  /** Renderer → Main: obtener fuentes del proyecto para visibilidad entre archivos */
   TS_GET_PROJECT_SOURCES: 'TS_GET_PROJECT_SOURCES',
 
-  // ── File System Watcher (invoke/handle + send) ──────────
+  // ── Observador del Sistema de Archivos (invoke/handle + send) ──
   /** Renderer → Main: iniciar monitoreo recursivo de un directorio */
   FS_WATCH_START: 'FS_WATCH_START',
   /** Renderer → Main: detener monitoreo activo */
