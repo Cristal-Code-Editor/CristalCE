@@ -352,7 +352,7 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave, f
     // Crear modelo con URI file:/// para que el TS worker reconozca .tsx/.jsx
     let model: monaco.editor.ITextModel | undefined
     if (filePath) {
-      const uri = monaco.Uri.parse(`file:///${filePath.replace(/\\/g, '/')}`)
+      const uri = monaco.Uri.file(filePath)
       model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(defaultValue, language, uri)
       model.setValue(defaultValue)
     }

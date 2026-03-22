@@ -126,7 +126,8 @@ function mapCompilerOptions(
  * Ej: C:\Users\project\src\index.ts → file:///C:/Users/project/src/index.ts
  */
 function toFileUri(absolutePath: string): string {
-  return `file:///${absolutePath.replace(/\\/g, '/')}`
+  if (absolutePath.startsWith('file:///')) return absolutePath;
+  return monaco.Uri.file(absolutePath).toString()
 }
 
 /**
@@ -300,8 +301,9 @@ declare namespace JSX {
     const typeLibs = await window.cristalAPI.tsGetTypeLibs(rootPath)
     console.info(`[TS Intelligence] ${typeLibs.length} type definitions cargadas`)
     for (const lib of typeLibs) {
-      const d1 = tsDefaults.addExtraLib(lib.content, lib.filePath)
-      const d2 = jsDefaults.addExtraLib(lib.content, lib.filePath)
+      const uri = toFileUri(lib.filePath)
+      const d1 = tsDefaults.addExtraLib(lib.content, uri)
+      const d2 = jsDefaults.addExtraLib(lib.content, uri)
       activeDisposables.push(d1, d2)
     }
   } catch (err) {
@@ -314,7 +316,7 @@ declare namespace JSX {
     const sources = await window.cristalAPI.tsGetProjectSources(rootPath, fileNames)
     console.info(`[TS Intelligence] ${sources.length} archivos fuente cargados`)
     for (const src of sources) {
-      upsertSourceExtraLib(src.filePath, src.content)
+      upsertSourceExtraLib(toFileUri(src.filePath), src.content)
     }
   } catch (err) {
     console.error('[TS Intelligence] Error al cargar fuentes del proyecto:', err)

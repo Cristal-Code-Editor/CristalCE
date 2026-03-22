@@ -7,7 +7,7 @@
  *   - Declaraciones de tipo de dependencias (@types/*)
  *   - Archivos fuente del proyecto para cross-file awareness
  */
-import { join } from 'path'
+import { join, sep } from 'path'
 import { readFile, readdir, stat } from 'fs/promises'
 import { existsSync } from 'fs'
 
@@ -19,7 +19,7 @@ export interface TsProjectConfig {
 }
 
 export interface TypeLib {
-  /** URI del archivo (file:///path/to/file.d.ts) */
+    /** Ruta absoluta en el disco */
   filePath: string
   /** Contenido del .d.ts */
   content: string
@@ -246,7 +246,8 @@ async function scanDtsFiles(pkgDir: string, libs: TypeLib[]): Promise<void> {
       if (pkgCount >= MAX_DTS_PER_PKG || libs.length >= MAX_DTS_TOTAL) break
       try {
         const content = await readFile(file.fullPath, 'utf-8')
-        const filePath = `file:///${file.fullPath.replace(/\\/g, '/')}`
+        // Retornar la ruta absoluta del OS, el renderer se encarga de convertir a URI de Monaco
+        const filePath = file.fullPath
         libs.push({ filePath, content })
         pkgCount++
       } catch {
@@ -338,7 +339,7 @@ export async function scanTypeLibs(rootPath: string): Promise<TypeLib[]> {
 
 async function tryLoadPkgTypes(pkgDir: string, pkgName: string, libs: TypeLib[]): Promise<void> {
   // Omitir si ya tenemos @types/ para este paquete
-  if (libs.some((l) => l.filePath.includes(`@types/${pkgName}/`))) return
+  if (libs.some((l) => l.filePath.includes(`@types${sep}${pkgName}${sep}`))) return
 
   const pkgJsonPath = join(pkgDir, 'package.json')
   if (!existsSync(pkgJsonPath)) return
@@ -369,9 +370,7 @@ export async function readProjectSources(
   for (const fullPath of fileNames) {
     try {
       const content = await readFile(fullPath, 'utf-8')
-      // URI absoluta — debe coincidir con las URIs de los modelos que crea CodeEditor
-      // para que el module resolver de Monaco resuelva imports entre archivos
-      const filePath = `file:///${fullPath.replace(/\\/g, '/')}`
+      const filePath = fullPath
       sources.push({ filePath, content })
     } catch {
       // Omitir archivos no legibles

@@ -7,10 +7,3 @@ dist
 
 .idea
 .vscode
-test_nvidia.py
-test_types.js
-test_ts_flow.js
-ts_worker_snippet.txt
-ts_worker_snippet2.txt
-ts_worker_snippet3.txt
-ts_worker_snippet4.txt
