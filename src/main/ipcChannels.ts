@@ -120,6 +120,14 @@ export const IPC_CHANNELS = {
   TS_GET_TYPE_LIBS: 'TS_GET_TYPE_LIBS',
   /** Renderer → Main: obtener fuentes del proyecto para cross-file awareness */
   TS_GET_PROJECT_SOURCES: 'TS_GET_PROJECT_SOURCES',
+
+  // ── File System Watcher (invoke/handle + send) ──────────
+  /** Renderer → Main: iniciar monitoreo recursivo de un directorio */
+  FS_WATCH_START: 'FS_WATCH_START',
+  /** Renderer → Main: detener monitoreo activo */
+  FS_WATCH_STOP: 'FS_WATCH_STOP',
+  /** Main → Renderer: evento de cambio detectado en el filesystem */
+  FS_WATCH_EVENT: 'FS_WATCH_EVENT',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
