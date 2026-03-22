@@ -134,6 +134,14 @@ export interface CristalAPI {
   /** Lee archivos fuente del proyecto para cross-file awareness. */
   tsGetProjectSources: (rootPath: string, fileNames: string[]) => Promise<{ filePath: string; content: string }[]>
 
+  // ── File System Watcher ────────────────────────────────────
+  /** Inicia monitoreo recursivo de cambios en el directorio raíz. */
+  fsWatchStart: (rootPath: string) => Promise<void>
+  /** Detiene el monitoreo del filesystem. */
+  fsWatchStop: () => Promise<void>
+  /** Escucha eventos de cambio en el filesystem (rename = crear/borrar/renombrar, change = contenido). */
+  onFsWatchEvent: (callback: (event: { eventType: 'rename' | 'change'; filePath: string; parentDir: string }) => void) => () => void
+
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
   /** Alterna maximizar / restaurar la ventana principal. */
@@ -340,5 +348,15 @@ contextBridge.exposeInMainWorld('cristalAPI', {
   tsGetConfig: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.TS_GET_CONFIG, rootPath),
   tsGetTypeLibs: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.TS_GET_TYPE_LIBS, rootPath),
   tsGetProjectSources: (rootPath: string, fileNames: string[]) => ipcRenderer.invoke(IPC_CHANNELS.TS_GET_PROJECT_SOURCES, rootPath, fileNames),
+
+  // ── File System Watcher ─────────────────────────────────────────
+  fsWatchStart: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_WATCH_START, rootPath),
+  fsWatchStop: () => ipcRenderer.invoke(IPC_CHANNELS.FS_WATCH_STOP),
+
+  onFsWatchEvent: (callback: (event: { eventType: 'rename' | 'change'; filePath: string; parentDir: string }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { eventType: 'rename' | 'change'; filePath: string; parentDir: string }) => callback(data)
+    ipcRenderer.on(IPC_CHANNELS.FS_WATCH_EVENT, handler)
+    return () => { ipcRenderer.removeListener(IPC_CHANNELS.FS_WATCH_EVENT, handler) }
+  },
 
 } satisfies CristalAPI)
