@@ -80,7 +80,7 @@ export default function RuntimeModal({ onClose }: RuntimeModalProps) {
     return unsub
   }, [])
 
-  // Focus en el input de búsqueda
+  // Enfocar el campo de búsqueda
   useEffect(() => { searchRef.current?.focus() }, [])
 
   // Lista filtrada
