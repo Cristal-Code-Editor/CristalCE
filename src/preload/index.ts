@@ -114,6 +114,26 @@ export interface CristalAPI {
   /** Escucha cuando una sesión PTY termina. */
   onTerminalExit: (callback: (id: string, exitCode: number) => void) => () => void
 
+  // ── Settings & Persistence ────────────────────────────────
+  /** Obtiene la configuración global del editor. */
+  settingsGet: () => Promise<Record<string, unknown>>
+  /** Actualiza la configuración global (merge parcial). */
+  settingsSet: (patch: Record<string, unknown>) => Promise<Record<string, unknown>>
+  /** Obtiene el estado guardado del workspace (tabs abiertos, layout). */
+  workspaceStateGet: (rootPath: string) => Promise<{ openTabs: { filePath: string; isActive: boolean }[]; sidebarWidth?: number; terminalOpen?: boolean }>
+  /** Guarda el estado del workspace. */
+  workspaceStateSet: (rootPath: string, state: { openTabs: { filePath: string; isActive: boolean }[]; sidebarWidth?: number; terminalOpen?: boolean }) => Promise<void>
+  /** Registra un workspace en la lista de recientes. */
+  settingsAddRecent: (rootPath: string) => Promise<void>
+
+  // ── TypeScript Intelligence ────────────────────────────────
+  /** Obtiene la configuración TS del proyecto (compilerOptions + lista de archivos). */
+  tsGetConfig: (rootPath: string) => Promise<{ compilerOptions: Record<string, unknown>; fileNames: string[] }>
+  /** Escanea node_modules para type definitions (.d.ts). */
+  tsGetTypeLibs: (rootPath: string) => Promise<{ filePath: string; content: string }[]>
+  /** Lee archivos fuente del proyecto para cross-file awareness. */
+  tsGetProjectSources: (rootPath: string, fileNames: string[]) => Promise<{ filePath: string; content: string }[]>
+
   /** Minimiza la ventana principal. */
   windowMinimize: () => void
   /** Alterna maximizar / restaurar la ventana principal. */
@@ -308,5 +328,17 @@ contextBridge.exposeInMainWorld('cristalAPI', {
   popupMenu: (menuLabel: string, x: number, y: number) => {
     ipcRenderer.send('popup-app-menu', menuLabel, x, y)
   },
+
+  // ── Settings & Persistence ─────────────────────────────────────────
+  settingsGet: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET),
+  settingsSet: (patch: Record<string, unknown>) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET, patch),
+  workspaceStateGet: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_STATE_GET, rootPath),
+  workspaceStateSet: (rootPath: string, state: unknown) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_STATE_SET, rootPath, state),
+  settingsAddRecent: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_ADD_RECENT, rootPath),
+
+  // ── TypeScript Intelligence ─────────────────────────────────────────
+  tsGetConfig: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.TS_GET_CONFIG, rootPath),
+  tsGetTypeLibs: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.TS_GET_TYPE_LIBS, rootPath),
+  tsGetProjectSources: (rootPath: string, fileNames: string[]) => ipcRenderer.invoke(IPC_CHANNELS.TS_GET_PROJECT_SOURCES, rootPath, fileNames),
 
 } satisfies CristalAPI)
