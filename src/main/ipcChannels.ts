@@ -100,6 +100,26 @@ export const IPC_CHANNELS = {
   TERMINAL_EXIT: 'TERMINAL_EXIT',
   /** Renderer → Main: abrir diálogo para seleccionar ejecutable de shell */
   TERMINAL_SELECT_SHELL: 'TERMINAL_SELECT_SHELL',
+
+  // ── Settings & Persistence (invoke/handle) ──────────────
+  /** Renderer → Main: obtener configuración global */
+  SETTINGS_GET: 'SETTINGS_GET',
+  /** Renderer → Main: actualizar configuración global (merge parcial) */
+  SETTINGS_SET: 'SETTINGS_SET',
+  /** Renderer → Main: obtener estado del workspace (tabs, layout) */
+  WORKSPACE_STATE_GET: 'WORKSPACE_STATE_GET',
+  /** Renderer → Main: guardar estado del workspace */
+  WORKSPACE_STATE_SET: 'WORKSPACE_STATE_SET',
+  /** Renderer → Main: registrar un workspace en la lista de recientes */
+  SETTINGS_ADD_RECENT: 'SETTINGS_ADD_RECENT',
+
+  // ── TypeScript Intelligence (invoke/handle) ─────────────
+  /** Renderer → Main: obtener tsconfig.json + lista de archivos TS del proyecto */
+  TS_GET_CONFIG: 'TS_GET_CONFIG',
+  /** Renderer → Main: obtener type definitions de node_modules */
+  TS_GET_TYPE_LIBS: 'TS_GET_TYPE_LIBS',
+  /** Renderer → Main: obtener fuentes del proyecto para cross-file awareness */
+  TS_GET_PROJECT_SOURCES: 'TS_GET_PROJECT_SOURCES',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
