@@ -21,7 +21,7 @@ const EXT_TO_LANGUAGE: Record<string, string> = {
   scss: 'scss',
   less: 'less',
 
-  // Data
+  // Datos
   json: 'json',
   jsonc: 'json',
   xml: 'xml',
@@ -29,12 +29,12 @@ const EXT_TO_LANGUAGE: Record<string, string> = {
   yml: 'yaml',
   toml: 'ini',
 
-  // Markdown / Text
+  // Markdown / Texto
   md: 'markdown',
   mdx: 'markdown',
   txt: 'plaintext',
 
-  // Backend / Systems
+  // Backend / Sistemas
   py: 'python',
   rs: 'rust',
   go: 'go',
@@ -52,7 +52,7 @@ const EXT_TO_LANGUAGE: Record<string, string> = {
   r: 'r',
   sql: 'sql',
 
-  // Shell / Config
+  // Shell / Configuración
   sh: 'shell',
   bash: 'shell',
   zsh: 'shell',
@@ -61,7 +61,7 @@ const EXT_TO_LANGUAGE: Record<string, string> = {
   cmd: 'bat',
   dockerfile: 'dockerfile',
 
-  // Config files
+  // Archivos de configuración
   ini: 'ini',
   conf: 'ini',
   env: 'ini',
