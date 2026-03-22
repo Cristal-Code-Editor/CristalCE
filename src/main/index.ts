@@ -808,6 +808,22 @@ ipcMain.handle(
   },
 )
 
+// ─── IPC: File System Watcher ────────────────────────────────────────────────
+
+import { startWatching, stopWatching } from './fileWatcher'
+
+ipcMain.handle(
+  IPC_CHANNELS.FS_WATCH_START,
+  async (_event, rootPath: string) => {
+    if (!mainWindow) return
+    startWatching(rootPath, mainWindow)
+  },
+)
+
+ipcMain.handle(IPC_CHANNELS.FS_WATCH_STOP, async () => {
+  stopWatching()
+})
+
 app.whenReady().then(() => {
   createWindow()
 
@@ -821,6 +837,7 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   destroyAllTerminals()
+  stopWatching()
   // En macOS la app permanece activa hasta Cmd+Q explícito
   if (process.platform !== 'darwin') {
     app.quit()
