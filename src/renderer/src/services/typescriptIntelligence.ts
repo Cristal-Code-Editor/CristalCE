@@ -104,6 +104,7 @@ function mapCompilerOptions(
     module,
     jsx,
     moduleResolution,
+    jsxImportSource: typeof raw.jsxImportSource === 'string' ? raw.jsxImportSource : 'react',
     allowJs: raw.allowJs === true,
     checkJs: raw.checkJs === true,
     strict: raw.strict !== false,
@@ -233,6 +234,36 @@ export async function configureTypeScriptForWorkspace(rootPath: string): Promise
   }
   tsDefaults.setCompilerOptions(immediateOptions)
   jsDefaults.setCompilerOptions(immediateOptions)
+
+  // Inyectar un "shim" global de React/JSX para asegurar que Monaco nunca marque 
+  // los tags HTML normales en rojo aun si fallan los @types o se asumen Next.js.
+  const REACT_JSX_SHIM = `
+declare module "react/jsx-runtime" {
+  export const Fragment: any;
+  export function jsx(type: any, props: any, key?: string): any;
+  export function jsxs(type: any, props: any, key?: string): any;
+}
+declare module "react/jsx-dev-runtime" {
+  export const Fragment: any;
+  export function jsxDEV(type: any, props: any, key?: string, isStaticChildren?: boolean, source?: any, self?: any): any;
+}
+declare module "react" {
+  export = React;
+}
+declare namespace React {
+  export const Fragment: any;
+}
+declare namespace JSX {
+  interface IntrinsicElements {
+    [elemName: string]: any;
+  }
+  interface Element {}
+  interface ElementClass {}
+  interface ElementAttributesProperty { props: {}; }
+  interface ElementChildrenAttribute { children: {}; }
+}
+  `;
+  upsertSourceExtraLib('file:///react-jsx-fallback.d.ts', REACT_JSX_SHIM)
 
   tsDefaults.setDiagnosticsOptions({
     noSemanticValidation: false,
