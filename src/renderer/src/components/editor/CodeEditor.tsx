@@ -8,6 +8,8 @@ interface CodeEditorProps {
   defaultValue: string
   onChange: (value: string) => void
   onSave?: () => void
+  /** Ruta del archivo en disco — permite a Monaco mapear el modelo a una URI file:/// real. */
+  filePath?: string | null
   /** Ref inyectada por el padre para insertar código generado en la posición del cursor. */
   onInsertCodeRef?: MutableRefObject<((code: string) => void) | null>
 }
@@ -366,7 +368,7 @@ function ensureTheme() {
 
 /* ── Component ─────────────────────────────────────────── */
 
-export default function CodeEditor({ language, defaultValue, onChange, onSave, onInsertCodeRef }: CodeEditorProps) {
+export default function CodeEditor({ language, defaultValue, onChange, onSave, filePath, onInsertCodeRef }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
 
@@ -383,9 +385,18 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave, o
 
     ensureTheme()
 
+    // Crear modelo con URI file:/// para que el TS worker reconozca .tsx/.jsx
+    let model: monaco.editor.ITextModel | undefined
+    if (filePath) {
+      const uri = monaco.Uri.parse(`file:///${filePath.replace(/\\/g, '/')}`)
+      model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(defaultValue, language, uri)
+      model.setValue(defaultValue)
+    }
+
     const editor = monaco.editor.create(containerRef.current, {
-      value: defaultValue,
-      language,
+      model: model ?? undefined,
+      value: model ? undefined : defaultValue,
+      language: model ? undefined : language,
       theme: 'cristal-dark',
 
       // Font — fontWeight explícito para métricas precisas del cursor
@@ -549,6 +560,7 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave, o
       inlineProvider.dispose()
       disposable.dispose()
       editor.dispose()
+      if (model) model.dispose()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
