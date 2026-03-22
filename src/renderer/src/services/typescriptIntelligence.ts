@@ -5,6 +5,9 @@
  *   2. Type definitions de node_modules (@types/*, inline .d.ts)
  *   3. Archivos fuente del proyecto para cross-file awareness
  *
+ * Todas las URIs son absolutas (file:///C:/...) para que el module resolver
+ * de Monaco coincida con las URIs de los modelos creados por CodeEditor.
+ *
  * Se invoca cuando se abre un workspace y se limpia al cerrar/cambiar.
  */
 import * as monaco from 'monaco-editor'
@@ -14,6 +17,19 @@ const ts = (monaco as any).typescript as typeof import('monaco-editor').typescri
 
 /** Disposables activos para limpiar al cambiar de workspace */
 let activeDisposables: monaco.IDisposable[] = []
+
+/**
+ * Mapa de extraLibs de archivos fuente del proyecto.
+ * Permite actualizar/eliminar extraLibs individuales cuando el filesystem cambia,
+ * manteniendo la visibilidad cross-file actualizada sin recargar todo el workspace.
+ */
+const sourceExtraLibs = new Map<string, { ts: monaco.IDisposable; js: monaco.IDisposable }>()
+
+/** Extensiones que participan en la resolución de módulos TS/JS */
+const TS_JS_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx'])
+
+/** Cleanup del file watcher subscription */
+let fsWatchCleanup: (() => void) | null = null
 
 /**
  * Mapea compilerOptions del tsconfig.json a valores que Monaco acepta.
@@ -98,6 +114,80 @@ function mapCompilerOptions(
 }
 
 /**
+ * Convierte una ruta absoluta del SO a URI file:/// normalizada.
+ * Ej: C:\Users\project\src\index.ts → file:///C:/Users/project/src/index.ts
+ */
+function toFileUri(absolutePath: string): string {
+  return `file:///${absolutePath.replace(/\\/g, '/')}`
+}
+
+/**
+ * Registra o reemplaza el extraLib de un archivo fuente del proyecto.
+ * Si el archivo ya tenía un extraLib previo, lo dispone antes de crear uno nuevo.
+ */
+function upsertSourceExtraLib(fileUri: string, content: string): void {
+  const tsDefaults = ts.typescriptDefaults
+  const jsDefaults = ts.javascriptDefaults
+
+  // Disponer extraLib previo si existía
+  const existing = sourceExtraLibs.get(fileUri)
+  if (existing) {
+    existing.ts.dispose()
+    existing.js.dispose()
+  }
+
+  const d1 = tsDefaults.addExtraLib(content, fileUri)
+  const d2 = jsDefaults.addExtraLib(content, fileUri)
+  sourceExtraLibs.set(fileUri, { ts: d1, js: d2 })
+}
+
+/**
+ * Elimina el extraLib de un archivo fuente que ya no existe en disco.
+ */
+function removeSourceExtraLib(fileUri: string): void {
+  const existing = sourceExtraLibs.get(fileUri)
+  if (existing) {
+    existing.ts.dispose()
+    existing.js.dispose()
+    sourceExtraLibs.delete(fileUri)
+  }
+}
+
+/**
+ * Maneja eventos del file watcher para mantener los extraLibs sincronizados.
+ * - 'change': el contenido de un archivo cambió → re-leer y actualizar extraLib
+ * - 'rename': archivo creado/eliminado/renombrado → agregar o quitar extraLib
+ */
+async function handleFsWatchEvent(event: { eventType: 'rename' | 'change'; filePath: string }): Promise<void> {
+  const ext = event.filePath.substring(event.filePath.lastIndexOf('.'))
+  if (!TS_JS_EXTENSIONS.has(ext)) return
+
+  // Ignorar archivos dentro de node_modules (los tipos se cargan una vez)
+  if (event.filePath.includes('node_modules')) return
+
+  const fileUri = toFileUri(event.filePath)
+
+  if (event.eventType === 'change') {
+    // Contenido modificado → re-leer del disco y actualizar extraLib
+    try {
+      const content = await window.cristalAPI.readFile(event.filePath)
+      upsertSourceExtraLib(fileUri, content)
+    } catch {
+      // Archivo no legible (quizá se eliminó justo después del evento)
+    }
+  } else if (event.eventType === 'rename') {
+    // rename puede ser crear o eliminar; intentar leer para determinar cuál
+    try {
+      const content = await window.cristalAPI.readFile(event.filePath)
+      upsertSourceExtraLib(fileUri, content)
+    } catch {
+      // El archivo no existe → fue eliminado, quitar extraLib
+      removeSourceExtraLib(fileUri)
+    }
+  }
+}
+
+/**
  * Configura la inteligencia TypeScript de Monaco para un workspace.
  * Llamar cada vez que se abra o cambie de workspace.
  */
@@ -128,11 +218,11 @@ export async function configureTypeScriptForWorkspace(rootPath: string): Promise
     noSuggestionDiagnostics: false,
   })
 
-  // Eager model sync para que el worker conozca todos los modelos
+  // Eager model sync para que el worker conozca todos los modelos abiertos
   tsDefaults.setEagerModelSync(true)
   jsDefaults.setEagerModelSync(true)
 
-  // 2. Cargar type definitions de node_modules
+  // 2. Cargar type definitions de node_modules (estáticas, no cambian en runtime)
   const typeLibs = await window.cristalAPI.tsGetTypeLibs(rootPath)
   for (const lib of typeLibs) {
     const d1 = tsDefaults.addExtraLib(lib.content, lib.filePath)
@@ -141,20 +231,37 @@ export async function configureTypeScriptForWorkspace(rootPath: string): Promise
   }
 
   // 3. Cargar fuentes del proyecto para visibilidad entre archivos
+  //    Usa sourceExtraLibs (con tracking) para poder actualizar individualmente
   const sources = await window.cristalAPI.tsGetProjectSources(rootPath, config.fileNames)
   for (const src of sources) {
-    const d1 = tsDefaults.addExtraLib(src.content, src.filePath)
-    const d2 = jsDefaults.addExtraLib(src.content, src.filePath)
-    activeDisposables.push(d1, d2)
+    upsertSourceExtraLib(src.filePath, src.content)
   }
+
+  // 4. Suscribirse al file watcher para mantener extraLibs sincronizados
+  //    Cuando un archivo TS/JS cambia en disco, se actualiza su extraLib
+  fsWatchCleanup = window.cristalAPI.onFsWatchEvent(handleFsWatchEvent)
 }
 
 /**
  * Limpia la configuración TS activa (al cerrar workspace o cambiar).
  */
 export function disposeTypeScript(): void {
+  // Limpiar suscripción al file watcher
+  if (fsWatchCleanup) {
+    fsWatchCleanup()
+    fsWatchCleanup = null
+  }
+
+  // Disponer extraLibs de node_modules
   for (const d of activeDisposables) {
     d.dispose()
   }
   activeDisposables = []
+
+  // Disponer extraLibs de archivos fuente del proyecto
+  for (const [, entry] of sourceExtraLibs) {
+    entry.ts.dispose()
+    entry.js.dispose()
+  }
+  sourceExtraLibs.clear()
 }
