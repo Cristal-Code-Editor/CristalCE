@@ -267,7 +267,7 @@ ipcMain.on('popup-app-menu', (_event, menuLabel: string, x: number, y: number) =
   }
 })
 
-// ─── IPC: File System Operations ──────────────────────────────────────────────
+// ─── IPC: Operaciones del Sistema de Archivos ──────────────────────────────────
 
 /** Estructura de una entrada de directorio enviada al Renderer. */
 interface DirEntry {
@@ -448,7 +448,7 @@ ipcMain.handle(
     const matchIdx = allFilters.findIndex((f) => f.extensions.includes(ext))
     const ordered =
       matchIdx > 0
-        ? [allFilters[matchIdx], ...allFilters.slice(0, matchIdx), ...allFilters.slice(matchIdx + 1)]
+        ? [allFilters[matchIdx]!, ...allFilters.slice(0, matchIdx), ...allFilters.slice(matchIdx + 1)]
         : allFilters
 
     const result = await dialog.showSaveDialog(mainWindow, {
@@ -473,7 +473,7 @@ ipcMain.handle(IPC_CHANNELS.DIALOG_OPEN_FOLDER, async () => {
   }
 })
 
-// ─── IPC: AI Completions vía proxy → CF Worker → NVIDIA ──────────────────────
+// ─── IPC: Autocompletado IA vía proxy → CF Worker → NVIDIA ──────────────────────
 
 /** URL del proxy API y token JWT para autenticar peticiones al backend. */
 const AI_API_URL = 'https://api.cristalce.com'
@@ -672,7 +672,7 @@ ipcMain.handle(IPC_CHANNELS.STOP_CODE, async () => {
   }
 })
 
-// ─── IPC: Runtime Version Manager ────────────────────────────────────────────
+// ─── IPC: Gestor de Versiones de Runtime ─────────────────────────────────────
 
 ipcMain.handle(IPC_CHANNELS.RUNTIME_LIST_AVAILABLE, async () => {
   return listAvailableVersions()
@@ -737,10 +737,10 @@ ipcMain.handle(IPC_CHANNELS.TERMINAL_SELECT_SHELL, async (): Promise<string | nu
       : [{ name: 'Todos', extensions: ['*'] }],
   })
   if (result.canceled || result.filePaths.length === 0) return null
-  return result.filePaths[0]
+  return result.filePaths[0] ?? null
 })
 
-// ─── IPC: Settings & Persistence ─────────────────────────────────────────────
+// ─── IPC: Configuración y Persistencia ───────────────────────────────────────
 
 import {
   getGlobalSettings,
@@ -783,7 +783,7 @@ ipcMain.handle(
   },
 )
 
-// ─── IPC: TypeScript Intelligence ────────────────────────────────────────────
+// ─── IPC: Inteligencia TypeScript ────────────────────────────────────────────
 
 import { readTsConfig, scanTypeLibs, readProjectSources } from './tsConfigService'
 
@@ -808,7 +808,7 @@ ipcMain.handle(
   },
 )
 
-// ─── IPC: File System Watcher ────────────────────────────────────────────────
+// ─── IPC: Observador del Sistema de Archivos ────────────────────────────────
 
 import { startWatching, stopWatching } from './fileWatcher'
 
