@@ -342,6 +342,7 @@ export default function EditorPane({
               key={activeTab.id}
               language={activeTab.language}
               defaultValue={activeTab.content}
+              filePath={activeTab.filePath}
               onChange={(v) => onContentChange(activeTab.id, v)}
               onSave={() => onSave(activeTab.id)}
               onInsertCodeRef={insertCodeRef}
