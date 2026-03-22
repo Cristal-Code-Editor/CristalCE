@@ -199,7 +199,14 @@ export async function configureTypeScriptForWorkspace(rootPath: string): Promise
   const jsDefaults = ts.javascriptDefaults
 
   // 1. Obtener tsconfig.json del proyecto
-  const config = await window.cristalAPI.tsGetConfig(rootPath)
+  let config: { compilerOptions: Record<string, unknown>; fileNames: string[] }
+  try {
+    config = await window.cristalAPI.tsGetConfig(rootPath)
+  } catch (err) {
+    console.error('[TS Intelligence] Error al obtener tsconfig:', err)
+    config = { compilerOptions: {}, fileNames: [] }
+  }
+
   const compilerOptions = mapCompilerOptions(config.compilerOptions)
 
   // Aplicar compilerOptions a ambos workers (TS y JS)
@@ -223,18 +230,29 @@ export async function configureTypeScriptForWorkspace(rootPath: string): Promise
   jsDefaults.setEagerModelSync(true)
 
   // 2. Cargar type definitions de node_modules (estáticas, no cambian en runtime)
-  const typeLibs = await window.cristalAPI.tsGetTypeLibs(rootPath)
-  for (const lib of typeLibs) {
-    const d1 = tsDefaults.addExtraLib(lib.content, lib.filePath)
-    const d2 = jsDefaults.addExtraLib(lib.content, lib.filePath)
-    activeDisposables.push(d1, d2)
+  try {
+    const typeLibs = await window.cristalAPI.tsGetTypeLibs(rootPath)
+    console.info(`[TS Intelligence] ${typeLibs.length} type definitions cargadas`)
+    for (const lib of typeLibs) {
+      const d1 = tsDefaults.addExtraLib(lib.content, lib.filePath)
+      const d2 = jsDefaults.addExtraLib(lib.content, lib.filePath)
+      activeDisposables.push(d1, d2)
+    }
+  } catch (err) {
+    console.error('[TS Intelligence] Error al cargar type definitions:', err)
   }
 
   // 3. Cargar fuentes del proyecto para visibilidad entre archivos
   //    Usa sourceExtraLibs (con tracking) para poder actualizar individualmente
-  const sources = await window.cristalAPI.tsGetProjectSources(rootPath, config.fileNames)
-  for (const src of sources) {
-    upsertSourceExtraLib(src.filePath, src.content)
+  try {
+    const fileNames = config.fileNames ?? []
+    const sources = await window.cristalAPI.tsGetProjectSources(rootPath, fileNames)
+    console.info(`[TS Intelligence] ${sources.length} archivos fuente cargados`)
+    for (const src of sources) {
+      upsertSourceExtraLib(src.filePath, src.content)
+    }
+  } catch (err) {
+    console.error('[TS Intelligence] Error al cargar fuentes del proyecto:', err)
   }
 
   // 4. Suscribirse al file watcher para mantener extraLibs sincronizados
