@@ -38,7 +38,7 @@ export interface CristalAPI {
    */
   onFolderOpen: (callback: (folderPath: string) => void) => () => void
 
-  // ── File System (invoke/handle) ─────────────────────────
+  // ── Sistema de Archivos (invoke/handle) ─────────────────────
   /** Lee contenido de un archivo como string UTF-8. */
   readFile: (filePath: string) => Promise<string>
   /** Escribe contenido string UTF-8 a un archivo. */
@@ -66,11 +66,11 @@ export interface CristalAPI {
   /** Abre el diálogo nativo para seleccionar carpeta. */
   openFolderDialog: () => Promise<void>
 
-  // ── AI Completions ─────────────────────────────────────
+  // ── Autocompletado IA ─────────────────────────────────
   /** Solicita autocompletado de código al proxy AI. */
   requestCompletion: (prompt: string, language: string, context?: string) => Promise<string>
 
-  // ── Code Execution ─────────────────────────────────────
+  // ── Ejecución de Código ───────────────────────────────
   /** Ejecuta código en un proceso hijo. */
   runCode: (code: string, language: string) => Promise<void>
   /** Detiene el proceso de ejecución activo. */
@@ -82,7 +82,7 @@ export interface CristalAPI {
   /** Escucha cuando el proceso termina. */
   onCodeExit: (callback: (exitCode: number) => void) => () => void
 
-  // ── Runtime Manager ─────────────────────────────────────────
+  // ── Gestor de Runtimes ───────────────────────────────────
   /** Obtiene versiones de Node.js disponibles para instalar. */
   runtimeListAvailable: () => Promise<{ version: string; lts: string | false; date: string }[]>
   /** Obtiene versiones instaladas localmente. */
@@ -114,7 +114,7 @@ export interface CristalAPI {
   /** Escucha cuando una sesión PTY termina. */
   onTerminalExit: (callback: (id: string, exitCode: number) => void) => () => void
 
-  // ── Settings & Persistence ────────────────────────────────
+  // ── Configuración y Persistencia ──────────────────────
   /** Obtiene la configuración global del editor. */
   settingsGet: () => Promise<Record<string, unknown>>
   /** Actualiza la configuración global (merge parcial). */
@@ -126,15 +126,15 @@ export interface CristalAPI {
   /** Registra un workspace en la lista de recientes. */
   settingsAddRecent: (rootPath: string) => Promise<void>
 
-  // ── TypeScript Intelligence ────────────────────────────────
+  // ── Inteligencia TypeScript ───────────────────────────
   /** Obtiene la configuración TS del proyecto (compilerOptions + lista de archivos). */
   tsGetConfig: (rootPath: string) => Promise<{ compilerOptions: Record<string, unknown>; fileNames: string[] }>
   /** Escanea node_modules para type definitions (.d.ts). */
   tsGetTypeLibs: (rootPath: string) => Promise<{ filePath: string; content: string }[]>
-  /** Lee archivos fuente del proyecto para cross-file awareness. */
+  /** Lee archivos fuente del proyecto para visibilidad entre archivos. */
   tsGetProjectSources: (rootPath: string, fileNames: string[]) => Promise<{ filePath: string; content: string }[]>
 
-  // ── File System Watcher ────────────────────────────────────
+  // ── Observador del Sistema de Archivos ──────────────────
   /** Inicia monitoreo recursivo de cambios en el directorio raíz. */
   fsWatchStart: (rootPath: string) => Promise<void>
   /** Detiene el monitoreo del filesystem. */
@@ -189,7 +189,7 @@ contextBridge.exposeInMainWorld('cristalAPI', {
     }
   },
 
-  // ── File System Operations ──────────────────────────────
+  // ── Operaciones del Sistema de Archivos ────────────────────
   readFile: (filePath: string): Promise<string> => {
     return ipcRenderer.invoke(IPC_CHANNELS.FS_READ_FILE, filePath)
   },
@@ -242,12 +242,12 @@ contextBridge.exposeInMainWorld('cristalAPI', {
     return ipcRenderer.invoke(IPC_CHANNELS.DIALOG_OPEN_FOLDER)
   },
 
-  // ── AI Completions ────────────────────────────────────
+  // ── Autocompletado IA ────────────────────────────────────
   requestCompletion: (prompt: string, language: string, context?: string): Promise<string> => {
     return ipcRenderer.invoke(IPC_CHANNELS.AI_COMPLETION, { prompt, language, context })
   },
 
-  // ── Code Execution ────────────────────────────────────
+  // ── Ejecución de Código ────────────────────────────────────
   runCode: (code: string, language: string): Promise<void> => {
     return ipcRenderer.invoke(IPC_CHANNELS.RUN_CODE, code, language)
   },
@@ -274,7 +274,7 @@ contextBridge.exposeInMainWorld('cristalAPI', {
     return () => { ipcRenderer.removeListener(IPC_CHANNELS.CODE_EXIT, handler) }
   },
 
-  // ── Runtime Manager ─────────────────────────────────────────
+  // ── Gestor de Runtimes ─────────────────────────────────────────
   runtimeListAvailable: () => ipcRenderer.invoke(IPC_CHANNELS.RUNTIME_LIST_AVAILABLE),
   runtimeListInstalled: () => ipcRenderer.invoke(IPC_CHANNELS.RUNTIME_LIST_INSTALLED),
   runtimeInstall: (version: string) => ipcRenderer.invoke(IPC_CHANNELS.RUNTIME_INSTALL, version),
@@ -337,19 +337,19 @@ contextBridge.exposeInMainWorld('cristalAPI', {
     ipcRenderer.send('popup-app-menu', menuLabel, x, y)
   },
 
-  // ── Settings & Persistence ─────────────────────────────────────────
+  // ── Configuración y Persistencia ─────────────────────────────────
   settingsGet: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET),
   settingsSet: (patch: Record<string, unknown>) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET, patch),
   workspaceStateGet: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_STATE_GET, rootPath),
   workspaceStateSet: (rootPath: string, state: unknown) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_STATE_SET, rootPath, state),
   settingsAddRecent: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_ADD_RECENT, rootPath),
 
-  // ── TypeScript Intelligence ─────────────────────────────────────────
+  // ── Inteligencia TypeScript ─────────────────────────────────────────
   tsGetConfig: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.TS_GET_CONFIG, rootPath),
   tsGetTypeLibs: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.TS_GET_TYPE_LIBS, rootPath),
   tsGetProjectSources: (rootPath: string, fileNames: string[]) => ipcRenderer.invoke(IPC_CHANNELS.TS_GET_PROJECT_SOURCES, rootPath, fileNames),
 
-  // ── File System Watcher ─────────────────────────────────────────
+  // ── Observador del Sistema de Archivos ───────────────────────────────────
   fsWatchStart: (rootPath: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_WATCH_START, rootPath),
   fsWatchStop: () => ipcRenderer.invoke(IPC_CHANNELS.FS_WATCH_STOP),
 
