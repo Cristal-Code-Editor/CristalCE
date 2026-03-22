@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useCallback, useRef, useEffect, type ReactNode } from 'react'
 import { configureTypeScriptForWorkspace, disposeTypeScript } from '../services/typescriptIntelligence'
 
-/* ── Types ─────────────────────────────────────────────── */
+/* ── Tipos ───────────────────────────────────────────── */
 
 export interface SavedTabInfo {
   filePath: string
@@ -14,7 +14,7 @@ export interface PersistedWorkspaceState {
   terminalOpen?: boolean
 }
 
-/* ── State ─────────────────────────────────────────────── */
+/* ── Estado ──────────────────────────────────────────── */
 
 interface WorkspaceState {
   /** Ruta de la carpeta abierta como workspace, o null si no hay carpeta abierta. */
@@ -45,7 +45,7 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
   }
 }
 
-/* ── Context ───────────────────────────────────────────── */
+/* ── Contexto ────────────────────────────────────────── */
 
 type FileOpenCallback = (filePath: string) => void
 
@@ -68,7 +68,7 @@ export function useWorkspace(): WorkspaceContextValue {
   return ctx
 }
 
-/* ── Provider ──────────────────────────────────────────── */
+/* ── Proveedor ───────────────────────────────────────── */
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(workspaceReducer, { rootPath: null, rootName: '', restoredState: null })
@@ -78,7 +78,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_ROOT', rootPath })
   }, [])
 
-  // Cuando cambia el rootPath: restaurar estado + configurar TS intelligence
+  // Cuando cambia el rootPath: restaurar estado + configurar inteligencia TS
   useEffect(() => {
     if (!state.rootPath) {
       disposeTypeScript()
@@ -97,10 +97,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    // Configurar TypeScript intelligence
+    // Configurar inteligencia TypeScript
     configureTypeScriptForWorkspace(rootPath)
 
-    // Iniciar watcher del filesystem
+    // Iniciar observador del filesystem
     window.cristalAPI.fsWatchStart(rootPath)
 
     return () => {
