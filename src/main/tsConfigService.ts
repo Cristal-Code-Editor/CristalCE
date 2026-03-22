@@ -103,9 +103,11 @@ async function scanProjectFiles(rootPath: string, maxFiles = 500): Promise<strin
  * Límites para prevenir carga excesiva de archivos de tipos.
  * MAX_DTS_PER_PKG: máximo de .d.ts por paquete (ej. @types/node tiene ~200).
  * MAX_DTS_TOTAL: máximo global de .d.ts cargados.
+ * MAX_DTS_SIZE: máximo de bytes por archivo .d.ts (omitir archivos enormes).
  */
 const MAX_DTS_PER_PKG = 150
 const MAX_DTS_TOTAL = 2000
+const MAX_DTS_SIZE = 512 * 1024 // 512 KB por archivo
 
 /**
  * Escanea recursivamente todos los .d.ts dentro de un directorio de paquete.
@@ -141,6 +143,8 @@ async function scanDtsFiles(pkgDir: string, libs: TypeLib[]): Promise<void> {
       if (info.isDirectory()) {
         await walk(fullPath)
       } else if (entry.endsWith('.d.ts') || entry.endsWith('.d.mts') || entry.endsWith('.d.cts')) {
+        // Omitir archivos excesivamente grandes para no saturar el IPC
+        if (info.size > MAX_DTS_SIZE) continue
         try {
           const content = await readFile(fullPath, 'utf-8')
           // URI absoluta para compatibilidad con el module resolver de Monaco
