@@ -62,6 +62,13 @@ export function createTerminal(
   const shell = opts.shellPath ?? defaultShell()
   const shellArgs = opts.shellArgs ?? []
 
+  // Inyectar espacio después del prompt en CMD para legibilidad
+  const env = { ...process.env } as Record<string, string>
+  const shellLower = shell.toLowerCase()
+  if (shellLower.endsWith('cmd.exe') || shellLower.endsWith('cmd')) {
+    env['PROMPT'] = '$P$G '
+  }
+
   let pty: IPty
   try {
     pty = ptySpawn(shell, shellArgs, {
@@ -69,7 +76,7 @@ export function createTerminal(
       cols,
       rows,
       cwd,
-      env: process.env as Record<string, string>,
+      env,
     })
   } catch (err) {
     console.error('[TerminalManager] Error al crear sesión PTY:', err)
