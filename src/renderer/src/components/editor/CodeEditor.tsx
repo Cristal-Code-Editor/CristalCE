@@ -26,56 +26,46 @@ function ensureTheme() {
     base: 'vs-dark',
     inherit: true,
     rules: [
-      // ── Comments ────────────────────────────────────────
       { token: 'comment', foreground: '6a9955', fontStyle: 'italic' },
       { token: 'comment.doc', foreground: '6a9955', fontStyle: 'italic' },
 
-      // ── Keywords & Control Flow ─────────────────────────
       { token: 'keyword', foreground: 'c586c0' },
       { token: 'keyword.control', foreground: 'c586c0' },
       { token: 'keyword.operator', foreground: 'd4d4d4' },
       { token: 'keyword.other', foreground: '569cd6' },
 
-      // ── Storage / Modifiers ─────────────────────────────
       { token: 'storage', foreground: '569cd6' },
       { token: 'storage.type', foreground: '569cd6' },
       { token: 'storage.modifier', foreground: '569cd6' },
 
-      // ── Strings ─────────────────────────────────────────
       { token: 'string', foreground: 'ce9178' },
       { token: 'string.escape', foreground: 'd7ba7d' },
       { token: 'string.regex', foreground: 'd16969' },
 
-      // ── Numbers / Constants ─────────────────────────────
       { token: 'number', foreground: 'b5cea8' },
       { token: 'number.hex', foreground: 'b5cea8' },
       { token: 'constant', foreground: '569cd6' },
       { token: 'constant.language', foreground: '569cd6' },
 
-      // ── Types & Interfaces ──────────────────────────────
       { token: 'type', foreground: '4ec9b0' },
       { token: 'type.identifier', foreground: '4ec9b0' },
       { token: 'support.type', foreground: '4ec9b0' },
 
-      // ── Functions ───────────────────────────────────────
       { token: 'entity.name.function', foreground: 'dcdcaa' },
       { token: 'support.function', foreground: 'dcdcaa' },
       { token: 'meta.function-call', foreground: 'dcdcaa' },
 
-      // ── Variables / Parameters ──────────────────────────
       { token: 'variable', foreground: '9cdcfe' },
       { token: 'variable.parameter', foreground: '9cdcfe' },
       { token: 'variable.other', foreground: '9cdcfe' },
       { token: 'identifier', foreground: '9cdcfe' },
 
-      // ── Operators / Punctuation ─────────────────────────
       { token: 'operator', foreground: 'd4d4d4' },
       { token: 'delimiter', foreground: 'd4d4d4' },
       { token: 'delimiter.bracket', foreground: 'ffd700' },
       { token: 'delimiter.parenthesis', foreground: 'da70d6' },
       { token: 'delimiter.square', foreground: '179fff' },
 
-      // ── Tags (HTML/JSX/TSX) ──────────────────────────────
       { token: 'tag', foreground: '569cd6' },
       { token: 'tag.html', foreground: '569cd6' },
       { token: 'tag.id.pug', foreground: '4ec9b0' },
@@ -88,13 +78,11 @@ function ensureTheme() {
       { token: 'type.identifier.ts', foreground: '4ec9b0' },
       { token: 'type.identifier.js', foreground: '4ec9b0' },
 
-      // ── Attributes (HTML/JSX) ───────────────────────────
       { token: 'attribute.name', foreground: '9cdcfe' },
       { token: 'attribute.name.html', foreground: '9cdcfe' },
       { token: 'attribute.value', foreground: 'ce9178' },
       { token: 'attribute.value.html', foreground: 'ce9178' },
 
-      // ── CSS Specific ────────────────────────────────────
       { token: 'attribute.name.css', foreground: '9cdcfe' },
       { token: 'attribute.value.css', foreground: 'ce9178' },
       { token: 'attribute.value.number.css', foreground: 'b5cea8' },
@@ -103,20 +91,17 @@ function ensureTheme() {
       { token: 'tag.id.css', foreground: '4ec9b0' },
       { token: 'tag.class.css', foreground: 'd7ba7d' },
 
-      // ── JSON Specific ───────────────────────────────────
       { token: 'string.key.json', foreground: '9cdcfe' },
       { token: 'string.value.json', foreground: 'ce9178' },
       { token: 'number.json', foreground: 'b5cea8' },
       { token: 'keyword.json', foreground: '569cd6' },
 
-      // ── Markdown ────────────────────────────────────────
       { token: 'markup.heading', foreground: '569cd6', fontStyle: 'bold' },
       { token: 'markup.bold', fontStyle: 'bold' },
       { token: 'markup.italic', fontStyle: 'italic' },
       { token: 'markup.inline', foreground: 'ce9178' },
       { token: 'markup.underline.link', foreground: '4ec9b0' },
 
-      // ── Python Specific ─────────────────────────────────
       { token: 'keyword.python', foreground: 'c586c0' },
       { token: 'identifier.python', foreground: '9cdcfe' },
       { token: 'type.identifier.python', foreground: '4ec9b0' },
@@ -124,7 +109,6 @@ function ensureTheme() {
       { token: 'number.python', foreground: 'b5cea8' },
       { token: 'string.python', foreground: 'ce9178' },
 
-      // ── TypeScript / JavaScript con sufijo ──────────────
       { token: 'keyword.ts', foreground: '569cd6' },
       { token: 'keyword.js', foreground: '569cd6' },
       { token: 'identifier.ts', foreground: '9cdcfe' },
@@ -140,7 +124,6 @@ function ensureTheme() {
       { token: 'comment.ts', foreground: '6a9955', fontStyle: 'italic' },
       { token: 'comment.js', foreground: '6a9955', fontStyle: 'italic' },
 
-      // ── SCSS / Less ─────────────────────────────────────
       { token: 'tag.scss', foreground: 'd7ba7d' },
       { token: 'attribute.name.scss', foreground: '9cdcfe' },
       { token: 'attribute.value.scss', foreground: 'ce9178' },
@@ -153,26 +136,22 @@ function ensureTheme() {
       { token: 'attribute.name.less', foreground: '9cdcfe' },
       { token: 'variable.less', foreground: '9cdcfe' },
 
-      // ── YAML ────────────────────────────────────────────
       { token: 'string.yaml', foreground: 'ce9178' },
       { token: 'number.yaml', foreground: 'b5cea8' },
       { token: 'keyword.yaml', foreground: '569cd6' },
       { token: 'type.yaml', foreground: '4ec9b0' },
 
-      // ── Shell / Bash ────────────────────────────────────
       { token: 'keyword.shell', foreground: 'c586c0' },
       { token: 'variable.shell', foreground: '9cdcfe' },
       { token: 'string.shell', foreground: 'ce9178' },
       { token: 'comment.shell', foreground: '6a9955', fontStyle: 'italic' },
 
-      // ── SQL ─────────────────────────────────────────────
       { token: 'keyword.sql', foreground: '569cd6' },
       { token: 'operator.sql', foreground: 'd4d4d4' },
       { token: 'string.sql', foreground: 'ce9178' },
       { token: 'number.sql', foreground: 'b5cea8' },
       { token: 'predefined.sql', foreground: 'dcdcaa' },
 
-      // ── Rust ────────────────────────────────────────────
       { token: 'keyword.rust', foreground: 'c586c0' },
       { token: 'keyword.type.rust', foreground: '569cd6' },
       { token: 'type.identifier.rust', foreground: '4ec9b0' },
@@ -180,14 +159,13 @@ function ensureTheme() {
       { token: 'number.rust', foreground: 'b5cea8' },
       { token: 'attribute.rust', foreground: 'dcdcaa' },
 
-      // ── Go ──────────────────────────────────────────────
       { token: 'keyword.go', foreground: '569cd6' },
       { token: 'type.identifier.go', foreground: '4ec9b0' },
       { token: 'string.go', foreground: 'ce9178' },
       { token: 'number.go', foreground: 'b5cea8' },
       { token: 'comment.go', foreground: '6a9955', fontStyle: 'italic' },
 
-      // ── C / C++ ─────────────────────────────────────────
+
       { token: 'keyword.cpp', foreground: '569cd6' },
       { token: 'keyword.c', foreground: '569cd6' },
       { token: 'identifier.cpp', foreground: '9cdcfe' },
@@ -196,7 +174,6 @@ function ensureTheme() {
       { token: 'number.cpp', foreground: 'b5cea8' },
       { token: 'directive.cpp', foreground: 'c586c0' },
 
-      // ── Java ────────────────────────────────────────────
       { token: 'keyword.java', foreground: '569cd6' },
       { token: 'keyword.control.java', foreground: 'c586c0' },
       { token: 'type.identifier.java', foreground: '4ec9b0' },
@@ -209,7 +186,7 @@ function ensureTheme() {
       { token: 'delimiter.java', foreground: 'd4d4d4' },
       { token: 'operator.java', foreground: 'd4d4d4' },
 
-      // ── C# ──────────────────────────────────────────────
+
       { token: 'keyword.cs', foreground: '569cd6' },
       { token: 'keyword.control.cs', foreground: 'c586c0' },
       { token: 'type.identifier.cs', foreground: '4ec9b0' },
@@ -223,7 +200,6 @@ function ensureTheme() {
       { token: 'delimiter.cs', foreground: 'd4d4d4' },
       { token: 'operator.cs', foreground: 'd4d4d4' },
 
-      // ── Kotlin ──────────────────────────────────────────
       { token: 'keyword.kotlin', foreground: '569cd6' },
       { token: 'keyword.control.kotlin', foreground: 'c586c0' },
       { token: 'type.identifier.kotlin', foreground: '4ec9b0' },
@@ -234,7 +210,6 @@ function ensureTheme() {
       { token: 'comment.kotlin', foreground: '6a9955', fontStyle: 'italic' },
       { token: 'delimiter.kotlin', foreground: 'd4d4d4' },
 
-      // ── Swift ────────────────────────────────────────────
       { token: 'keyword.swift', foreground: 'c586c0' },
       { token: 'type.identifier.swift', foreground: '4ec9b0' },
       { token: 'identifier.swift', foreground: '9cdcfe' },
@@ -245,7 +220,6 @@ function ensureTheme() {
       { token: 'operator.swift', foreground: 'd4d4d4' },
       { token: 'delimiter.swift', foreground: 'd4d4d4' },
 
-      // ── Dart ─────────────────────────────────────────────
       { token: 'keyword.dart', foreground: '569cd6' },
       { token: 'keyword.control.dart', foreground: 'c586c0' },
       { token: 'type.identifier.dart', foreground: '4ec9b0' },
@@ -257,7 +231,6 @@ function ensureTheme() {
       { token: 'comment.dart', foreground: '6a9955', fontStyle: 'italic' },
       { token: 'delimiter.dart', foreground: 'd4d4d4' },
 
-      // ── Lua ──────────────────────────────────────────────
       { token: 'keyword.lua', foreground: '569cd6' },
       { token: 'identifier.lua', foreground: '9cdcfe' },
       { token: 'string.lua', foreground: 'ce9178' },
@@ -266,7 +239,6 @@ function ensureTheme() {
       { token: 'delimiter.lua', foreground: 'd4d4d4' },
       { token: 'global.lua', foreground: 'dcdcaa' },
 
-      // ── PowerShell ──────────────────────────────────────
       { token: 'keyword.powershell', foreground: '569cd6' },
       { token: 'variable.powershell', foreground: '9cdcfe' },
       { token: 'string.powershell', foreground: 'ce9178' },
@@ -275,7 +247,6 @@ function ensureTheme() {
       { token: 'delimiter.powershell', foreground: 'd4d4d4' },
       { token: 'type.powershell', foreground: '4ec9b0' },
 
-      // ── Perl ─────────────────────────────────────────────
       { token: 'keyword.perl', foreground: 'c586c0' },
       { token: 'variable.perl', foreground: '9cdcfe' },
       { token: 'string.perl', foreground: 'ce9178' },
@@ -284,7 +255,6 @@ function ensureTheme() {
       { token: 'regexp.perl', foreground: 'd16969' },
       { token: 'operator.perl', foreground: 'd4d4d4' },
 
-      // ── Scala ────────────────────────────────────────────
       { token: 'keyword.scala', foreground: '569cd6' },
       { token: 'keyword.control.scala', foreground: 'c586c0' },
       { token: 'type.identifier.scala', foreground: '4ec9b0' },
@@ -294,35 +264,29 @@ function ensureTheme() {
       { token: 'number.scala', foreground: 'b5cea8' },
       { token: 'comment.scala', foreground: '6a9955', fontStyle: 'italic' },
 
-      // ── Visual Basic ────────────────────────────────────
       { token: 'keyword.vb', foreground: '569cd6' },
       { token: 'identifier.vb', foreground: '9cdcfe' },
       { token: 'string.vb', foreground: 'ce9178' },
       { token: 'number.vb', foreground: 'b5cea8' },
       { token: 'comment.vb', foreground: '6a9955', fontStyle: 'italic' },
 
-      // ── PHP ─────────────────────────────────────────────
       { token: 'metatag.php', foreground: '569cd6' },
       { token: 'keyword.php', foreground: 'c586c0' },
       { token: 'variable.php', foreground: '9cdcfe' },
       { token: 'string.php', foreground: 'ce9178' },
 
-      // ── Ruby ────────────────────────────────────────────
       { token: 'keyword.ruby', foreground: 'c586c0' },
       { token: 'string.ruby', foreground: 'ce9178' },
       { token: 'variable.ruby', foreground: '9cdcfe' },
       { token: 'regexp.ruby', foreground: 'd16969' },
 
-      // ── Annotations / Decorators ────────────────────────
       { token: 'annotation', foreground: 'dcdcaa' },
       { token: 'meta.decorator', foreground: 'dcdcaa' },
 
-      // ── Namespace / Module ──────────────────────────────
       { token: 'namespace', foreground: '4ec9b0' },
       { token: 'entity.name.class', foreground: '4ec9b0' },
       { token: 'entity.name.type', foreground: '4ec9b0' },
 
-      // ── Invalid ─────────────────────────────────────────
       { token: 'invalid', foreground: 'f44747' },
     ],
     colors: {
@@ -366,7 +330,7 @@ function ensureTheme() {
   })
 }
 
-/* ── Component ─────────────────────────────────────────── */
+/* ── Componente ───────────────────────────────────────── */
 
 export default function CodeEditor({ language, defaultValue, onChange, onSave, filePath, onInsertCodeRef }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -448,13 +412,13 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave, f
       parameterHints: { enabled: true },
       contextmenu: true,
 
-      // AI inline completions (ghost text)
+      // Autocompletado inline IA (ghost text)
       inlineSuggest: { enabled: true },
     })
 
     editorRef.current = editor
 
-    // ── AI Inline Completion Provider ──────────────────────
+    // ── Proveedor de autocompletado inline (IA) ────────────────────
     // Muestra sugerencias ghost-text del modelo Qwen vía proxy.
     // Se dispara tras 600ms de inactividad para no saturar el backend.
     let debounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -517,8 +481,9 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave, f
       freeInlineCompletions: () => {},
     })
 
-    // Forzar recálculo de métricas de fuente para alinear cursor correctamente
-    // Workaround: Monaco calcula métricas antes de que la fuente cargue completamente.
+    // Recalcular métricas de fuente tras la carga de la tipografía.
+    // Monaco puede calcular métricas antes de que la fuente esté lista,
+    // causando desalineamiento del cursor respecto al texto.
     document.fonts.ready.then(() => {
       monaco.editor.remeasureFonts()
     })
@@ -547,7 +512,7 @@ export default function CodeEditor({ language, defaultValue, onChange, onSave, f
       }
     }
 
-    // Propagate changes
+    // Propagar cambios al padre
     const disposable = editor.onDidChangeModelContent(() => {
       onChange(editor.getValue())
     })
