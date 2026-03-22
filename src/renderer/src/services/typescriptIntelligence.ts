@@ -140,17 +140,13 @@ export async function configureTypeScriptForWorkspace(rootPath: string): Promise
     activeDisposables.push(d1, d2)
   }
 
-  // 3. Cargar fuentes del proyecto para cross-file awareness
+  // 3. Cargar fuentes del proyecto para visibilidad entre archivos
   const sources = await window.cristalAPI.tsGetProjectSources(rootPath, config.fileNames)
   for (const src of sources) {
     const d1 = tsDefaults.addExtraLib(src.content, src.filePath)
     const d2 = jsDefaults.addExtraLib(src.content, src.filePath)
     activeDisposables.push(d1, d2)
   }
-
-  console.log(
-    `[TypeScript Intelligence] Configurado: ${typeLibs.length} type libs, ${sources.length} project sources`,
-  )
 }
 
 /**
