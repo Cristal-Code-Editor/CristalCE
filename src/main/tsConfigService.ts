@@ -7,7 +7,7 @@
  *   - Declaraciones de tipo de dependencias (@types/*)
  *   - Archivos fuente del proyecto para cross-file awareness
  */
-import { join, relative } from 'path'
+import { join } from 'path'
 import { readFile, readdir, stat } from 'fs/promises'
 import { existsSync } from 'fs'
 
@@ -99,29 +99,80 @@ async function scanProjectFiles(rootPath: string, maxFiles = 500): Promise<strin
 
 /* ── Escaneo de type definitions en node_modules ────────── */
 
+/**
+ * Límites para prevenir carga excesiva de archivos de tipos.
+ * MAX_DTS_PER_PKG: máximo de .d.ts por paquete (ej. @types/node tiene ~200).
+ * MAX_DTS_TOTAL: máximo global de .d.ts cargados.
+ */
+const MAX_DTS_PER_PKG = 150
+const MAX_DTS_TOTAL = 2000
+
+/**
+ * Escanea recursivamente todos los .d.ts dentro de un directorio de paquete.
+ * Usa URIs absolutas (file:///C:/...) para que el module resolver de Monaco
+ * resuelva correctamente las referencias entre archivos.
+ */
+async function scanDtsFiles(pkgDir: string, libs: TypeLib[]): Promise<void> {
+  if (libs.length >= MAX_DTS_TOTAL) return
+
+  let pkgCount = 0
+  async function walk(dir: string): Promise<void> {
+    if (pkgCount >= MAX_DTS_PER_PKG || libs.length >= MAX_DTS_TOTAL) return
+
+    let entries: string[]
+    try {
+      entries = await readdir(dir)
+    } catch {
+      return
+    }
+
+    for (const entry of entries) {
+      if (pkgCount >= MAX_DTS_PER_PKG || libs.length >= MAX_DTS_TOTAL) break
+      if (entry === 'node_modules' || entry === '.git') continue
+
+      const fullPath = join(dir, entry)
+      let info
+      try {
+        info = await stat(fullPath)
+      } catch {
+        continue
+      }
+
+      if (info.isDirectory()) {
+        await walk(fullPath)
+      } else if (entry.endsWith('.d.ts') || entry.endsWith('.d.mts') || entry.endsWith('.d.cts')) {
+        try {
+          const content = await readFile(fullPath, 'utf-8')
+          // URI absoluta para compatibilidad con el module resolver de Monaco
+          const filePath = `file:///${fullPath.replace(/\\/g, '/')}`
+          libs.push({ filePath, content })
+          pkgCount++
+        } catch {
+          // Archivo no legible, omitir
+        }
+      }
+    }
+  }
+
+  await walk(pkgDir)
+}
+
 export async function scanTypeLibs(rootPath: string): Promise<TypeLib[]> {
   const libs: TypeLib[] = []
   const nodeModules = join(rootPath, 'node_modules')
 
   if (!existsSync(nodeModules)) return libs
 
-  // 1. @types/* packages
+  // 1. @types/* — cargar TODOS los .d.ts recursivamente (no solo index.d.ts)
+  //    Resuelve referencias cruzadas como `/// <reference path="global.d.ts" />`
   const atTypesDir = join(nodeModules, '@types')
   if (existsSync(atTypesDir)) {
     try {
       const packages = await readdir(atTypesDir)
       for (const pkg of packages) {
-        const indexPath = join(atTypesDir, pkg, 'index.d.ts')
-        if (existsSync(indexPath)) {
-          try {
-            const content = await readFile(indexPath, 'utf-8')
-            // Usar URI relativa al workspace para Monaco
-            const filePath = `file:///node_modules/@types/${pkg}/index.d.ts`
-            libs.push({ filePath, content })
-          } catch {
-            // Archivo no legible, omitir
-          }
-        }
+        if (libs.length >= MAX_DTS_TOTAL) break
+        const pkgDir = join(atTypesDir, pkg)
+        await scanDtsFiles(pkgDir, libs)
       }
     } catch {
       // Directorio @types no legible
@@ -132,6 +183,7 @@ export async function scanTypeLibs(rootPath: string): Promise<TypeLib[]> {
   try {
     const topLevel = await readdir(nodeModules)
     for (const pkg of topLevel) {
+      if (libs.length >= MAX_DTS_TOTAL) break
       if (pkg.startsWith('.') || pkg === '@types') continue
 
       // Paquetes con scope (@scope/nombre)
@@ -173,7 +225,8 @@ async function tryLoadPkgTypes(pkgDir: string, pkgName: string, libs: TypeLib[])
     if (!existsSync(typesPath)) return
 
     const content = await readFile(typesPath, 'utf-8')
-    const filePath = `file:///node_modules/${pkgName}/${typesField}`
+    // URI absoluta para compatibilidad con el module resolver de Monaco
+    const filePath = `file:///${typesPath.replace(/\\/g, '/')}`
     libs.push({ filePath, content })
   } catch {
     // Omitir
@@ -183,7 +236,7 @@ async function tryLoadPkgTypes(pkgDir: string, pkgName: string, libs: TypeLib[])
 /* ── Leer archivos fuente del proyecto para visibilidad entre archivos ── */
 
 export async function readProjectSources(
-  rootPath: string,
+  _rootPath: string,
   fileNames: string[],
 ): Promise<TypeLib[]> {
   const sources: TypeLib[] = []
@@ -191,9 +244,9 @@ export async function readProjectSources(
   for (const fullPath of fileNames) {
     try {
       const content = await readFile(fullPath, 'utf-8')
-      // Convertir ruta absoluta a URI relativa al workspace
-      const rel = relative(rootPath, fullPath).replace(/\\/g, '/')
-      const filePath = `file:///${rel}`
+      // URI absoluta — debe coincidir con las URIs de los modelos que crea CodeEditor
+      // para que el module resolver de Monaco resuelva imports entre archivos
+      const filePath = `file:///${fullPath.replace(/\\/g, '/')}`
       sources.push({ filePath, content })
     } catch {
       // Omitir archivos no legibles
