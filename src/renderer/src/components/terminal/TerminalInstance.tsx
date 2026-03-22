@@ -122,7 +122,7 @@ export default function TerminalInstance({ sessionId, visible }: TerminalInstanc
     }
   }, [visible, sessionId])
 
-  // Focus cuando se activa la pestaña
+  // Enfocar cuando se activa la pestaña
   useEffect(() => {
     if (visible) {
       termRef.current?.focus()
