@@ -7,7 +7,7 @@
  *   - Declaraciones de tipo de dependencias (@types/*)
  *   - Archivos fuente del proyecto para cross-file awareness
  */
-import { join, sep } from 'path'
+import { join } from 'path'
 import { readFile, readdir, stat } from 'fs/promises'
 import { existsSync } from 'fs'
 
@@ -199,9 +199,12 @@ const MAX_DTS_TOTAL = 8000
 const MAX_DTS_SIZE = 1024 * 1024 // 1 MB por archivo
 
 /**
- * Escanea recursivamente todos los .d.ts dentro de un directorio de paquete.
- * Usa URIs absolutas (file:///C:/...) para que el module resolver de Monaco
- * resuelva correctamente las referencias entre archivos.
+ * Escanea recursivamente todos los .d.ts (y package.json) dentro de un directorio de paquete.
+ * El renderer convierte las rutas del OS a URIs de Monaco.
+ *
+ * También incluye package.json porque el resolver TS de Monaco lo necesita
+ * para leer los campos `types`, `typesVersions` y `exports` y mapear
+ * subpath imports como "next/font/google" → "next/dist/.../google.d.ts".
  */
 async function scanDtsFiles(pkgDir: string, libs: TypeLib[]): Promise<void> {
   if (libs.length >= MAX_DTS_TOTAL) return
@@ -217,9 +220,6 @@ async function scanDtsFiles(pkgDir: string, libs: TypeLib[]): Promise<void> {
       return
     }
 
-    // Separar archivos y directorios para procesar .d.ts primero.
-    // Paquetes como `next` tienen 1400+ .d.ts internos en dist/ que agotan
-    // MAX_DTS_PER_PKG antes de llegar a los .d.ts públicos (image.d.ts, etc.)
     const files: { name: string; fullPath: string; size: number }[] = []
     const dirs: { name: string; fullPath: string }[] = []
 
@@ -234,19 +234,21 @@ async function scanDtsFiles(pkgDir: string, libs: TypeLib[]): Promise<void> {
       }
       if (info.isDirectory()) {
         dirs.push({ name: entry, fullPath })
-      } else if (entry.endsWith('.d.ts') || entry.endsWith('.d.mts') || entry.endsWith('.d.cts')) {
+      } else if (
+        entry.endsWith('.d.ts') || entry.endsWith('.d.mts') || entry.endsWith('.d.cts')
+        || entry === 'package.json'
+      ) {
         if (info.size <= MAX_DTS_SIZE) {
           files.push({ name: entry, fullPath, size: info.size })
         }
       }
     }
 
-    // Primero: cargar .d.ts del directorio actual
+    // Primero: cargar .d.ts y package.json del directorio actual
     for (const file of files) {
       if (pkgCount >= MAX_DTS_PER_PKG || libs.length >= MAX_DTS_TOTAL) break
       try {
         const content = await readFile(file.fullPath, 'utf-8')
-        // Retornar la ruta absoluta del OS, el renderer se encarga de convertir a URI de Monaco
         const filePath = file.fullPath
         libs.push({ filePath, content })
         pkgCount++
@@ -291,9 +293,10 @@ export async function scanTypeLibs(rootPath: string): Promise<TypeLib[]> {
   for (const nodeModules of nmDirs) {
     if (libs.length >= MAX_DTS_TOTAL) break
 
-    // 1. @types/* — cargar TODOS los .d.ts recursivamente (no solo index.d.ts)
+    // 1. @types/* — cargar TODOS los .d.ts + package.json recursivamente
     //    Resuelve referencias cruzadas como `/// <reference path="global.d.ts" />`
     const atTypesDir = join(nodeModules, '@types')
+    const loadedAtTypes = new Set<string>()
     if (existsSync(atTypesDir)) {
       try {
         const packages = await readdir(atTypesDir)
@@ -301,6 +304,7 @@ export async function scanTypeLibs(rootPath: string): Promise<TypeLib[]> {
           if (libs.length >= MAX_DTS_TOTAL) break
           const pkgDir = join(atTypesDir, pkg)
           await scanDtsFiles(pkgDir, libs)
+          loadedAtTypes.add(pkg)
         }
       } catch {
         // Directorio @types no legible
@@ -320,13 +324,13 @@ export async function scanTypeLibs(rootPath: string): Promise<TypeLib[]> {
           try {
             const scopedPkgs = await readdir(scopeDir)
             for (const scopedPkg of scopedPkgs) {
-              await tryLoadPkgTypes(join(scopeDir, scopedPkg), `${pkg}/${scopedPkg}`, libs)
+              await tryLoadPkgTypes(join(scopeDir, scopedPkg), `${pkg}/${scopedPkg}`, loadedAtTypes, libs)
             }
           } catch {
             continue
           }
         } else {
-          await tryLoadPkgTypes(join(nodeModules, pkg), pkg, libs)
+          await tryLoadPkgTypes(join(nodeModules, pkg), pkg, loadedAtTypes, libs)
         }
       }
     } catch {
@@ -337,9 +341,15 @@ export async function scanTypeLibs(rootPath: string): Promise<TypeLib[]> {
   return libs
 }
 
-async function tryLoadPkgTypes(pkgDir: string, pkgName: string, libs: TypeLib[]): Promise<void> {
+async function tryLoadPkgTypes(
+  pkgDir: string,
+  pkgName: string,
+  loadedAtTypes: Set<string>,
+  libs: TypeLib[],
+): Promise<void> {
   // Omitir si ya tenemos @types/ para este paquete
-  if (libs.some((l) => l.filePath.includes(`@types${sep}${pkgName}${sep}`))) return
+  const baseName = pkgName.startsWith('@') ? pkgName.split('/').pop()! : pkgName
+  if (loadedAtTypes.has(baseName)) return
 
   const pkgJsonPath = join(pkgDir, 'package.json')
   if (!existsSync(pkgJsonPath)) return
@@ -350,9 +360,10 @@ async function tryLoadPkgTypes(pkgDir: string, pkgName: string, libs: TypeLib[])
     const typesField = pkg.types || pkg.typings
     if (!typesField) return
 
-    // Escanear TODOS los .d.ts del paquete recursivamente, no solo el entry point.
+    // Escanear TODOS los .d.ts + package.json del paquete recursivamente.
     // Paquetes como `next` exponen subpath types (next/image, next/link, etc.)
     // que necesitan sus .d.ts cargados para que Monaco resuelva los imports.
+    // package.json se incluye para que el resolver lea typesVersions/exports.
     await scanDtsFiles(pkgDir, libs)
   } catch {
     // Omitir

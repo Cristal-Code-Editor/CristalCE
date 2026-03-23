@@ -238,7 +238,8 @@ export async function configureTypeScriptForWorkspace(rootPath: string): Promise
 
   // Inyectar un "shim" global de React/JSX para asegurar que Monaco nunca marque 
   // los tags HTML normales en rojo aun si fallan los @types o se asumen Next.js.
-  const REACT_JSX_SHIM = `
+  // También declara módulos de assets (CSS, imágenes, etc.) para evitar errores de import.
+  const GLOBAL_SHIM = `
 declare module "react/jsx-runtime" {
   export const Fragment: any;
   export function jsx(type: any, props: any, key?: string): any;
@@ -263,8 +264,19 @@ declare namespace JSX {
   interface ElementAttributesProperty { props: {}; }
   interface ElementChildrenAttribute { children: {}; }
 }
+declare module "*.css" { const content: Record<string, string>; export default content; }
+declare module "*.scss" { const content: Record<string, string>; export default content; }
+declare module "*.less" { const content: Record<string, string>; export default content; }
+declare module "*.svg" { const content: any; export default content; }
+declare module "*.png" { const content: string; export default content; }
+declare module "*.jpg" { const content: string; export default content; }
+declare module "*.jpeg" { const content: string; export default content; }
+declare module "*.gif" { const content: string; export default content; }
+declare module "*.webp" { const content: string; export default content; }
+declare module "*.ico" { const content: string; export default content; }
+declare module "*.json" { const content: any; export default content; }
   `;
-  upsertSourceExtraLib('file:///react-jsx-fallback.d.ts', REACT_JSX_SHIM)
+  upsertSourceExtraLib('file:///global-shim.d.ts', GLOBAL_SHIM)
 
   tsDefaults.setDiagnosticsOptions({
     noSemanticValidation: false,
@@ -300,6 +312,9 @@ declare namespace JSX {
   try {
     const typeLibs = await window.cristalAPI.tsGetTypeLibs(rootPath)
     console.info(`[TS Intelligence] ${typeLibs.length} type definitions cargadas`)
+    // Debug: mostrar las primeras URIs para verificar el formato
+    const sample = typeLibs.slice(0, 5).map(l => ({ raw: l.filePath, uri: toFileUri(l.filePath) }))
+    console.info('[TS Intelligence] Sample extraLib URIs:', sample)
     for (const lib of typeLibs) {
       const uri = toFileUri(lib.filePath)
       const d1 = tsDefaults.addExtraLib(lib.content, uri)
