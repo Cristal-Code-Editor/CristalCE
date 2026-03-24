@@ -32,6 +32,24 @@ export interface InstalledRuntime {
 const runtimesDir = (): string => join(app.getPath('userData'), 'runtimes', 'node')
 const activeFile = (): string => join(app.getPath('userData'), 'runtimes', 'active.json')
 
+/* ── Validación de versión ─────────────────────────────── */
+
+/**
+ * Expresión regular para versiones Node.js válidas: v<major>.<minor>.<patch>
+ * Previene path traversal al usar la versión en rutas de sistema de archivos.
+ */
+const VERSION_RE = /^v\d+\.\d+\.\d+$/
+
+/**
+ * Lanza un error si la versión no cumple el formato semántico de Node.js.
+ * Protege contra path traversal en rutas construidas a partir de la versión.
+ */
+function assertValidVersion(version: string): void {
+  if (!VERSION_RE.test(version)) {
+    throw new Error(`Versión inválida: "${version}". Formato esperado: v<major>.<minor>.<patch>`)
+  }
+}
+
 /* ── Versiones disponibles (nodejs.org) ────────────────── */
 
 export async function listAvailableVersions(): Promise<NodeVersion[]> {
@@ -90,6 +108,7 @@ export async function installVersion(
   version: string,
   window: BrowserWindow,
 ): Promise<void> {
+  assertValidVersion(version)
   const versionDir = join(runtimesDir(), version)
   await mkdir(versionDir, { recursive: true })
 
@@ -136,6 +155,7 @@ export async function installVersion(
 
 export async function uninstallVersion(version: string): Promise<void> {
   if (version === 'embedded') return // No se puede eliminar el embebido
+  assertValidVersion(version)
   const versionDir = join(runtimesDir(), version)
   await rm(versionDir, { recursive: true })
 
@@ -159,6 +179,7 @@ export async function getActiveVersion(): Promise<string> {
 }
 
 export async function setActiveVersion(version: string): Promise<void> {
+  if (version !== 'embedded') assertValidVersion(version)
   const dir = join(app.getPath('userData'), 'runtimes')
   await mkdir(dir, { recursive: true })
   await writeFile(activeFile(), JSON.stringify({ active: version }), 'utf-8')
