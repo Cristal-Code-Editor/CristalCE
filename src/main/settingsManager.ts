@@ -41,6 +41,20 @@ const DEFAULT_WORKSPACE: WorkspaceState = {
   openTabs: [],
 }
 
+/**
+ * Conjunto de claves permitidas para GlobalSettings.
+ * Se usa para filtrar el patch recibido vía IPC y prevenir settings injection:
+ * un renderer comprometido podría inyectar claves arbitrarias en el JSON
+ * de configuración si no se validan contra este listado.
+ */
+const ALLOWED_SETTINGS_KEYS = new Set<keyof GlobalSettings>([
+  'fontSize',
+  'tabSize',
+  'wordWrap',
+  'minimap',
+  'recentWorkspaces',
+])
+
 /* ── Rutas ──────────────────────────────────────────────── */
 
 function globalSettingsPath(): string {
@@ -83,7 +97,12 @@ export async function getGlobalSettings(): Promise<GlobalSettings> {
 
 export async function setGlobalSettings(patch: Partial<GlobalSettings>): Promise<GlobalSettings> {
   const current = await getGlobalSettings()
-  const merged = { ...current, ...patch }
+  // Filtrar el patch a las claves permitidas para prevenir settings injection
+  const safePatch: Partial<GlobalSettings> = {}
+  for (const key of ALLOWED_SETTINGS_KEYS) {
+    if (key in patch) safePatch[key] = patch[key] as GlobalSettings[typeof key]
+  }
+  const merged = { ...current, ...safePatch }
   await writeJson(globalSettingsPath(), merged)
   return merged
 }
